@@ -5,33 +5,15 @@
 #
 # purpose:  Fetch bibtex references using the Digital Object Identifier DOI
 # author:   Marc Van Droogenbroeck
-# e-mail:   M.VanDroogenbroeck@uliege.be
+# e-mail:   M.VanDroogenbroeck __ AT __ uliege__DOT__be
 #
-# obs: A quite messy script, based on script taken from other authors
-#
-
-# ---------------------------------------------------------------
-#            README for new users
-# 
-# you need to define the following environment variable for your SHELL
-# for example, for the shell zshrc, add a line like this in your ".zshrc" file (and uncomment it)
-#export BIBLIOGRAPHY_DIR='/Users/mvd/git/bibliography/'
-# Then open a new terminal and do 
-#printenv 
-# to check if your variable is well defined.
-#
-# Obviously, you will have to install some python package
-# pip3 install ... is your friend...
-# pip3 install bibtexparser Levenshtein requests
-# 
-# Also, it might be a good idea to add the location of the script into your PATH envrionment variable to 
-# launch it from anywhere
 
 # ---------------------------------------------------------------
 # ----------- PARAMETERS TO BE CHANGED BY THE USER --------------
 # Default debug level.
 # Change it to 0 (none), 1 (mid), 2 (full) or 3 (insane all) if you want it to be more verbose
 DEBUG = 0
+
 # ----------- DO NOT CHANGE WHAT FOLLOWS  --------------
 # ---------------------------------------------------------------
 
