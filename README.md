@@ -1,20 +1,20 @@
 # doibib : yet another tool to generate a BiBTeX entry based on a DOI
 
 Specificities of this package:
-- corrects misformed DOIs fields
-- replaces keys (IDs) by a consistant key nomenclature. 
+- corrects misformed DOI fields
+- replaces keys (IDs) by a key nomenclature containind the first author'name, the year of publication and the first word(s) of the title. 
 - substitutes journal or proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
 - transform unicode characters into ASCII 7 bits characters.
 - handles capitalized letters in the title whenever possible.
 - guesses page numbers automatically when the web page mentions it or the PDF is available.
-- offer the possibility to switch from long names to short names (for journal or proceedings that have a _STRING_ macro)
-- works for many publishers and including preprints (arXiv, PsyArXiv, bioRxiv)
+- offers the possibility to switch from long names to short names (for journal or proceedings that have a _STRING_ macro).
+- works for many publishers and including preprints (arXiv, PsyArXiv, bioRxiv).
 
-Examples on how to use it: 
+## Examples on how to use it: 
 
-- doi2bib 10.1109/TIP.2010.2101613  (simple usage) 
-- doi2bib -v 10.1109/CVPR42600.2020.01314  (simple usage, moderate verbosity)
-- doi2bib -vv https://doi.org/10.48550/arXiv.2210.02365  (with the complete URL, verbose mode)
+> doi2bib 10.1109/TIP.2010.2101613  _(simple usage)_ <br>
+> doi2bib -v 10.1109/CVPR42600.2020.01314  _(simple usage, moderate verbosity)_ <br>
+> doi2bib -vv https://doi.org/10.48550/arXiv.2210.02365  _(with the complete URL, verbose mode)_ <br>
 
 ## Instructions for installation
 
@@ -32,12 +32,12 @@ For that you need to inform doi2bib of the availability of [abbreviation.bib](bi
 
 For linux and MacOSX systems, the steps to follow are:
 
-- edit your ".zshrc" file (adapt this to your favorite shell if you use another one; to find out which SHELL you are using, just run _printenv SHEEL_ in a terminal).
+- edit your ".zshrc" file (adapt this to your favorite shell if you use another one; to find out which SHELL you are using, just run _printenv SHELL_ in a terminal).
 - add the following line (after adaptation): 
-export BIBLIOGRAPHY_DIR='/home/me/utilityPath/doi2bib' 
+export BIBLIOGRAPHYDIR='/home/me/utilityPath/doi2bib' 
 - copy the bib directory to /home/me/utilityPath/doi2bib
 - start a new terminal and check if your variable has been set correctly by 
-> printenv BIBLIOGRAPHY_DIR
+> printenv BIBLIOGRAPHYDIR
 
 
 ### If you want to run doi2bib from anywhere

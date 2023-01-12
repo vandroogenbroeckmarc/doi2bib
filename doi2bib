@@ -91,9 +91,9 @@ def get_linenumber():
 # -------------------------------------------------------------------------
 # Some global variables
 
-path_to_bibliography = os.getenv('BIBLIOGRAPHY_DIR')
+path_to_bibliography = os.getenv('BIBLIOGRAPHYDIR')
 if path_to_bibliography is None:
-    print("\nVariable BIBLIOGRAPHY_DIR is not defined. Fix this and rerun the script\n")
+    print("\nVariable BIBLIOGRAPHYDIR is not defined. Fix this and rerun the script\n")
     exit()
 
 # ----------- Added variables by Marc Van Droogenbroeck ------------
