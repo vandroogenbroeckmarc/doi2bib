@@ -53,19 +53,19 @@ After adding it, do not forget to make the file "executable" by a typical
 Some journals require you to mention journal or conference or names in an abbreviated format (or if you just want to compress your list of references to match the publisher's requirements...).
 Later to use a short abbreviation instead, it is sufficient to replace "abbreviation" by "abbreviation-short" in the bibliography LaTeX entry. 
 For example (please note that abbreviation must be the first name in the list!), 
-- \bibliography{bib/abbreviation,bib/myBiBTeXEntries}
+> \bibliography{bib/abbreviation,bib/myBiBTeXEntries}
 becomes
-- \bibliography{bib/abbreviationshort,bib/myBiBTeXEntries}
+> \bibliography{bib/abbreviationshort,bib/myBiBTeXEntries}
 
 If no abbreviation is found in [abbreviation.bib](bib/abbreviation.bib), the doi2bib script will suggest an abbreviated format in the 'shortjournalproceedings' string, in addition to the complete name in the journal or proceedings string. This suggestion follows the LTWA standards and uses the file [abbrev.txt.gz](bib/_abbreviation_misc_/abbrev.txt.gz). 
-It is then up to you to decide on how to use this (either keep the suggestion only or add it your own versions of the abbreviation/abbrebviation-short pair of files). 
+It is then up to you to decide on how to use this (either keep the suggestion or add it your own versions of the abbreviation/abbrebviation-short pair of files). 
 Note however that I will update the two files from time to time.
  
 
 ## Use at your own risks... 
 
 I did my best to limit the amount of manual corrections but, believe me, DOIs are quite often wrongly encoded (even by well-known publishers...). Therefore, they will be mistakes in some BiBTeX entries, although in my daily practice more than 9 out of 10 references are rightly encoded. 
-Suggestions are obviously welcome.  
+Suggestions for improvements are obviously welcome.  
 
 
 ## Disclaimer 
