@@ -11,8 +11,10 @@ Examples on how to use it:
 
 ## Instructions for installation
 
-### First install the python package: pip3 install ... is your friend
+### First clone the repository and install the needed python packages
 
+> git clone https://github.com/vandroogenbroeckmarc/doi2bib.git
+> cd doi2bib
 > pip3 install -r requirements.txt
 
 
