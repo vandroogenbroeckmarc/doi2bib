@@ -1,7 +1,7 @@
 # doibib : yet another tool to generate a BiBTeX entry based on a DOI
 
 Specificities of this package:
-- corrects misformed DOI fields
+- corrects misformed DOI fields.
 - replaces keys (IDs) by a key nomenclature containind the first author'name, the year of publication and the first word(s) of the title. 
 - substitutes journal or proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
 - transform unicode characters into ASCII 7 bits characters.
@@ -10,7 +10,7 @@ Specificities of this package:
 - offers the possibility to switch from long names to short names (for journal or proceedings that have a _STRING_ macro).
 - works for many publishers and including preprints (arXiv, PsyArXiv, bioRxiv).
 
-## Examples on how to use it: 
+## Examples on how to use it 
 
 > doi2bib 10.1109/TIP.2010.2101613  _(simple usage)_ <br>
 > doi2bib -v 10.1109/CVPR42600.2020.01314  _(simple usage, moderate verbosity)_ <br>
