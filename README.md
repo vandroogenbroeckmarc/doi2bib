@@ -54,7 +54,9 @@ Some journals require you to mention journal or conference or names in an abbrev
 Later to use a short abbreviation instead, it is sufficient to replace "abbreviation" by "abbreviation-short" in the bibliography LaTeX entry. 
 For example (please note that abbreviation must be the first name in the list!), 
 > \bibliography{bib/abbreviation,bib/myBiBTeXEntries}
+
 becomes
+
 > \bibliography{bib/abbreviationshort,bib/myBiBTeXEntries}
 
 If no abbreviation is found in [abbreviation.bib](bib/abbreviation.bib), the doi2bib script will suggest an abbreviated format in the 'shortjournalproceedings' string, in addition to the complete name in the journal or proceedings string. This suggestion follows the LTWA standards and uses the file [abbrev.txt.gz](bib/_abbreviation_misc_/abbrev.txt.gz). 
