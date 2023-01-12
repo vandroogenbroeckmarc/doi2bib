@@ -1,6 +1,14 @@
-# doibib 
+# doibib : yet another tool to generate a BiBTeX entry based on a DOI
 
-This is a tool that generates a BiBTeX entry based on a DOI. 
+Specificities of this package:
+- corrects misformed DOIs fields
+- replaces keys (IDs) by a consistant key nomenclature. 
+- substitutes journal or proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
+- transform unicode characters into ASCII 7 bits characters.
+- handles capitalized letters in the title whenever possible.
+- guesses page numbers automatically when the web page mentions it or the PDF is available.
+- offer the possibility to switch from long names to short names (for journal or proceedings that have a _STRING_ macro)
+- works for many publishers and including preprints (arXiv, PsyArXiv, bioRxiv)
 
 Examples on how to use it: 
 
@@ -8,17 +16,13 @@ Examples on how to use it:
 - doi2bib -v 10.1109/CVPR42600.2020.01314  (simple usage, moderate verbosity)
 - doi2bib -vv https://doi.org/10.48550/arXiv.2210.02365  (with the complete URL, verbose mode)
 
-
 ## Instructions for installation
 
 ### First clone the repository and install the needed python packages
 
-> git clone https://github.com/vandroogenbroeckmarc/doi2bib.git
-
-> cd doi2bib
-
+> git clone https://github.com/vandroogenbroeckmarc/doi2bib.git <br>
+> cd doi2bib <br>
 > pip3 install -r requirements.txt
-
 
 ### Additional features
 
@@ -26,7 +30,7 @@ This "doi2bib" version is *tuned* for the scientific domains of computer vision 
 To help improving the consistency of references, there is a list of abbreviations named [abbreviation.bib](bib/abbreviation.bib) (with his companion's file of short abbreviations [abbreviation-short.bib](bib/abbreviation-short.bib)) that will automatically be substituted if detected. 
 For that you need to inform doi2bib of the availability of [abbreviation.bib](bib/abbreviation.bib). 
 
-For linux and MacOSX systems, the steps to follow ar:
+For linux and MacOSX systems, the steps to follow are:
 
 - edit your ".zshrc" file (adapt this to your favorite shell if you use another one; to find out which SHELL you are using, just run _printenv SHEEL_ in a terminal).
 - add the following line (after adaptation): 
