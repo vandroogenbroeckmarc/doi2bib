@@ -1,0 +1,4 @@
+bibtexparser==1.2.0
+PyPDF2==3.0.1
+python_Levenshtein==0.20.9
+requests==2.27.1
