@@ -1,7 +1,7 @@
 # doibib : yet another tool to generate a BiBTeX entry based on a DOI
 
-Specificities of this package:
-- corrects misformed DOI fields.
+Features of this package:
+- corrects misformed crossref fields given a DOI.
 - replaces keys (IDs) by a key nomenclature containind the first author'name, the year of publication and the first word(s) of the title. 
 - substitutes journal or proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
 - transform unicode characters into ASCII 7 bits characters.
@@ -26,7 +26,7 @@ Specificities of this package:
 
 ### Additional features
 
-This "doi2bib" version is *tuned* for the scientific domains of computer vision and artiticial intelligence --if only NIPS and ICLR were using DOIs as well... 
+This "doi2bib" version is *tuned* for the scientific domains of electrical engineering and computer sciences, but should work for many other domains as well --if only NIPS and ICLR were using DOIs as well... 
 To help improving the consistency of references, there is a list of abbreviations named [abbreviation.bib](bib/abbreviation.bib) (with his companion's file of short abbreviations [abbreviation-short.bib](bib/abbreviation-short.bib)) that will automatically be substituted if detected. 
 For that you need to inform doi2bib of the availability of [abbreviation.bib](bib/abbreviation.bib). 
 
@@ -53,7 +53,7 @@ After adding it, do not forget to make the file "executable" by a typical
 Some journals require you to mention journal or conference or names in an abbreviated format (or if you just want to compress your list of references to match the publisher's requirements...).
 Later to use a short abbreviation instead, it is sufficient to replace "abbreviation" by "abbreviation-short" in the bibliography LaTeX entry. 
 For example (please note that abbreviation must be the first name in the list!), 
-> \bibliography{bib/abbreviation,bib/myBiBTeXEntries}
+> \bibliography{bib/abbreviation,bib/myrefs}
 
 becomes
 
@@ -66,13 +66,13 @@ Note however that I will update the two files from time to time.
 
 ## Use at your own risks... 
 
-I did my best to limit the amount of manual corrections but, believe me, DOIs are quite often wrongly encoded (even by well-known publishers...). Therefore, they will be mistakes in some BiBTeX entries, although in my daily practice more than 9 out of 10 references are rightly encoded. 
+I did my best to limit the amount of manual corrections but, believe me, crossref fields given a DOI are quite often wrongly encoded (even by well-known publishers...). Therefore, they will be mistakes in some BiBTeX entries, although in my daily practice more than 9 out of 10 references are rightly encoded. 
 Suggestions for improvements are obviously welcome.  
 
 
 ## Disclaimer 
 
-I have use some initial code (largely modified though) from a github site that I cannot trace back. If you are the person who wrote that code, please let me know and I will give you the proper credit. I am also grateful to all the kind developers who makes their code available and to this extraordinary community! 
+I have used some initial code (largely modified though) from a github site that I cannot trace back. If you are the person who wrote that code, please let me know and I will give you the proper credit. I am also grateful to all the kind developers who makes their code available and to this extraordinary community! 
 
 Enjoy! 
 
