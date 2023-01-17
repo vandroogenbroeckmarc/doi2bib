@@ -83,6 +83,10 @@ import PyPDF2, io
 
 from inspect import currentframe
 
+def printDEBUG(debugLevel, string):
+    if (DEBUG >= debugLevel):
+        print(string)
+
 def get_linenumber():
     cf = currentframe()
     if DEBUG >= 2 :
@@ -164,16 +168,14 @@ def data_home(folder=None):
 
     if platform == 'win32':
         data_dir = windows_data_home()
-        if DEBUG >= 2:
-            print("Windows platform")
+        printDEBUG(2, "Windows platform")        
     elif platform == 'darwin':
         data_dir = darwin_data_home()
         if DEBUG >= 2:
            print("Mac OS platform: data_dir = " + data_dir)
     else:
         data_dir = unix_data_home()
-        if DEBUG >= 2:
-            print("Unix platform")
+        printDEBUG(2, "Unix platform")        
 
     if folder is None:
         return data_dir
@@ -231,8 +233,7 @@ def journal_abbrev(name):
     """
     Abbreviates a journal title
     """
-    if DEBUG >= 2:
-        print("Loading abbreviation for journal as ")
+    printDEBUG(2, "Loading abbreviation for journal as ")
     
     if DEBUG >= 3:
         print("Printing the full (long) list of abbreviations...")
@@ -329,9 +330,9 @@ def get_entry(doi):
             print("This is a misformed BiBTeX entry... exiting")
             exit()
 
+        printDEBUG(1, "Just fetched: ")
+        printDEBUG(1, entry)
         if DEBUG >= 1:
-           print("Just fetched: ")
-           print(entry)
            get_linenumber()
 
         # Reorganize the authors "field" if necessary
@@ -349,8 +350,7 @@ def get_entry(doi):
         if 'journal' in entry.keys():
             journalName = entry['journal']
             if journalName.find('&amp;'):
-                if DEBUG > 0: 
-                    print("Replacing &amp by & in the journal name")
+                printDEBUG(0, "Replacing &amp by & in the journal name")
                 journalName = journalName.replace('&amp;','&')
                 entry['journal'] = journalName 
             jabbr = journal_abbrev(entry['journal'])
@@ -415,9 +415,8 @@ def get_entry(doi):
                 print("Replacing ID key " + oldkey + " by " + newKey)
             entry['ID'] = newKey 
         
-        if DEBUG >= 2:
-            print("Before processing but after changing the ID key")
-            print(entry)
+        printDEBUG(2, "Before processing but after changing the ID key")
+        printDEBUG(2, entry)
 
         # Look for the title
         # indexNumber = -1
@@ -505,7 +504,7 @@ def get_entry(doi):
         if best_ratio > 0.95 or ( best_ratio > 0.8 and len(abbr[best_key]) > 40 ):
             if DEBUG >= 2:
                 print("Changing " + name + " by ")
-                print(abbr[best_key])
+            printDEBUG(2, abbr[best_key])
             if best_ratio < 0.9: 
                 print("\nIMPORTANT NOTE -- VERIFY if this is correct: substituting\n\t" + name + " by\n\t " + abbr[best_key])
             entry['journal'] = best_key    
@@ -519,42 +518,34 @@ def get_entry(doi):
         # Check if it is not a Springer LNCS/LNCS/AISC, etc series
         if ('journal' in entry.keys()) and (entry['doi'].find("10.1007/") > -1) :
 
-            if DEBUG >= 1: 
-               print("Springer editor: check if this article is within a series")
-               print(entry)
+            printDEBUG(1, "Springer editor: check if this article is within a series")
+            printDEBUG(1, entry)
             
             # Some hooks for detecting a series (because Springer's encoding is so poor...)
             page = getContentFromURL(entry['url'])
             if page.find("series (ACVPR)") > -1:
-               if DEBUG >= 1:
-                   print("\tACVPR series detected")
+               printDEBUG(1, "\tACVPR series detected")
                entry['journal'] = "acvpr"
             if page.find("AISC,volume") > -1:
-               if DEBUG >= 1:
-                   print("\tAISC series detected")
+               printDEBUG(1, "\tAISC series detected")
                entry['series'] = "aisc"
             if page.find("CCIS,volume") > -1:
-               if DEBUG >= 1:
-                   print("\tCCIS series detected")
+               printDEBUG(1, "\tCCIS series detected")
                entry['journal'] = "ccis"
             if page.find("ECPSCI,volume") > -1:
-               if DEBUG >= 1:
-                   print("\tECPSCIseries detected")
+               printDEBUG(1, "\tECPSCI series detected")
                entry['journal'] = "ecpsci"
             if page.find("LNCS,volume") > -1:
-               if DEBUG >= 1:
-                   print("\tLNCS series detected")
+               printDEBUG(1, "\tLNCS series detected")
                entry['journal'] = "lncs"
             if page.find("LNEE,volume") > -1:
-               if DEBUG >= 1:
-                   print("\tLNEE series detected")
+               printDEBUG(1, "\tLNEE series detected")
                entry['series'] = "lnee"
 
             # Some hooks for detecting a series (because Springer's encoding is so poor...)
             page = getContentFromURL(entry['url'])
             if page.find("MIMB, volume") > -1:
-               if DEBUG >= 1:
-                   print("\tMIMB series detected")
+               printDEBUG(1, "\tMIMB series detected")
                entry['journal'] = "mimb"
 
             # Check for LNCS / AISC / CCIS / etc entries
@@ -611,20 +602,17 @@ def get_entry(doi):
 
                    # Corrections specific to LNEE
                    if page.find("LNEE,volume") > -1:
-                       if DEBUG >= 1: 
-                          print("   found LNEE series")
+                       printDEBUG(1, "   found LNEE series")                       
                        entry['series'] = 'lnee'
                        # Try to fetch the volume number 
                        if re.search(r'LNEE,volume (.+)\)', page):
-                          if DEBUG >= 1: 
-                              print("\t try to find the volume number")
+                          printDEBUG(1, "\t try to find the volume number")
                           volumeText = re.search(r'LNEE,volume (.+)\)', page)
                           entry['volume'] = volumeText.group(1)
 
                    # Corrections specific to LNCVB
                    if page.find("LNCVB,volume") > -1:
-                       if DEBUG >= 1: 
-                          print("   found LNCVB series")
+                       printDEBUG(1, "   found LNCVB series")                       
                        # Try to fetch the volume number 
                        if re.search(r'LNCVB,volume (.+)\)', page):
                           if DEBUG >= 1: 
@@ -635,20 +623,17 @@ def get_entry(doi):
                        bookTitleText = re.search(r'(citation_inbook_title\"\scontent)=\"(.+)\"', page)
                        entry['booktitle'] = bookTitleText[2]
 
-                   if DEBUG >= 1: 
-                       print("Springer editor: changing entry type from article to inproceedings - done")
+                   printDEBUG(1, "Springer editor: changing entry type from article to inproceedings - done")
 
         # Put a checkpoint
         get_linenumber() 
 
         # Check for SPIE Proceedings / This might need some adaptation
         if ( entry['doi'].find("10.1117/") > -1 and not 'booktitle' in entry.keys() and not entry['doi'].find("jei") > -1 ):  # SPIE
-            if (DEBUG >= 1):
-               print("Found SPIE entry wrongly considered as a journal instead of proceedings")
+            printDEBUG(1, "Found SPIE entry wrongly considered as a journal instead of proceedings")
             entry['ENTRYTYPE'] = "inproceedings"
             entry['booktitle'] = entry['journal']
-            if (DEBUG >= 1):
-               print("\tdeleting journal entry")
+            printDEBUG(1, "\tdeleting journal entry")
             del entry['journal']
             entry['publisher'] = "SPIE"
             entry['series'] = "pspie"
@@ -668,13 +653,11 @@ def get_entry(doi):
 
         # Check for IOP Conferences Series / This might need some adaptation
         if entry['doi'].find("10.1088/") > -1:  # IOP
-            if DEBUG >= 1:
-                print("Found IOP publisher -> check for article Conference Series")
+            printDEBUG(1, "Found IOP publisher -> check for article Conference Series")
             if 'booktitle' in entry.keys():    
                 booktitle = entry['booktitle']
                 if booktitle.find('Conference Series') > -1:
-                    if DEBUG >= 1:
-                        print("Found IOP Conference Series")
+                    printDEBUG(1, "Found IOP Conference Series")
                     entry['series'] = "jpcs"
                 # Try to fetch booktitle 
                 # Currently, it is too complicated (because it is not structured) -> ask the user to do it by hand
@@ -692,8 +675,7 @@ def get_entry(doi):
 
         # Check for an arXiv document 
         if entry['doi'].find("10.48550/") > -1:  # arXiv
-            if DEBUG >=1 :
-               print("arXiv entry")
+            printDEBUG(1, "arXiv entry")
             entry['ID'] = entry['ID'] + "-arxiv"
             entry['ENTRYTYPE'] = "article"
             entry['journal'] = "arxiv"
@@ -710,8 +692,7 @@ def get_entry(doi):
 
         # Check for a bioRxiv document 
         if entry['doi'].find("10.1101/") > -1:  # bioRxiv
-            if DEBUG >=1 :
-               print("bioRxiventry")
+            printDEBUG(1, "bioRxiv entry")
             entry['ID'] = entry['ID'] + "-bioRxiv"
             entry['ENTRYTYPE'] = "article"
             entry['journal'] = "bioRxiv"
@@ -720,8 +701,7 @@ def get_entry(doi):
 
         # Check for a Psy-arXiv document 
         if entry['doi'].find("10.31234/") > -1:  # Psy-arXiv
-            if DEBUG >=1 :
-               print("PsyArXiv entry")
+            printDEBUG(1, "PsyArXiv entry")
             entry['ID'] = entry['ID'] + "-psyarxiv"
             entry['ENTRYTYPE'] = "article"
             entry['journal'] = "psyarxiv"
@@ -730,8 +710,7 @@ def get_entry(doi):
 
         # Check for a Research Square preprint document 
         if entry['doi'].find("10.21203/") > -1:  # Research Square
-            if DEBUG >=1 :
-               print("Preprint entry")
+            printDEBUG(1, "Preprint entry")
             entry['ID'] = entry['ID'] + "-preprint"
             entry['ENTRYTYPE'] = "article"
             entry['journal'] = "PREPRINT"
@@ -740,8 +719,7 @@ def get_entry(doi):
 
         # Check for a TechRxiv document
         if entry['doi'].find("10.36227/") > -1:  # TechRxiv
-            if DEBUG >=1 :
-               print("TechRxiv entry")
+            printDEBUG(1, "TechRxiv entry")
             entry['ENTRYTYPE'] = "article"
             entry['ID'] = entry['ID'] + "-techrxiv"
             entry['journal'] = "TechRxiv"
@@ -800,9 +778,8 @@ def get_entry(doi):
 
         # Specific to ACM (that does not provide the page numbers in the fetched metadata)
         if ( entry['doi'].find("10.1145/") > -1 and 'pages' not in entry.keys() ) :
-            if DEBUG >= 1: 
-                print("\nThis is an ACM conference without the page numbers")
-                print("\nTrying to find missing pages from the web page")
+            printDEBUG(1, "\nThis is an ACM conference without the page numbers")
+            printDEBUG(1, "\nTrying to find missing pages from the web page")
             # Try to find the start and end pages automagically
             page = getContentFromURL(entry['url'])
             if re.search(r'Pages ', page) : 
@@ -817,59 +794,47 @@ def get_entry(doi):
 
         # Specific to IEEE conferences 
         if ( entry['doi'].find("10.1109/") > -1 and 'booktitle' in entry.keys() ) : 
-            if DEBUG >= 1: 
-                print("\nThis is an IEEE conference")
+            printDEBUG(1, "\nThis is an IEEE conference")
 
             # 1. Try to find the start and end pages automagically
             if  ( 'pages' not in entry.keys() or len(entry['pages']) < 1) : 
-                if DEBUG >= 1: 
-                    print("\tTry to find missing pages of an IEEE conference")
+                printDEBUG(1, "\tTry to find missing pages of an IEEE conference")
                 page = getContentFromURL(entry['url'])
                 if re.search(r'startPage', page) and re.search(r'endPage', page):
                     startPageSearch = re.search(r'startPage\":\"(\d+)\"', page)
-                    if DEBUG >= 2: 
-                        print( startPageSearch )
+                    printDEBUG(2, startPageSearch)
                     endPageSearch = re.search(r'endPage\":\"(\d+)\"', page)
-                    if DEBUG >= 2: 
-                        print( endPageSearch )
+                    printDEBUG(2, endPageSearch)
                     entry['pages'] = startPageSearch[1] + "-" + endPageSearch[1]  
                     if DEBUG >= 1: 
                         print("\tFound page range = " + entry['pages'])
                 else: 
-                    if DEBUG >= 1: 
-                        print("\tCould not find missing page range")
+                    printDEBUG(1, "\tCould not find missing page range")
  
             # 2. Try to fill the Conference location automagically
             if ( 'address' not in entry.keys() or len(entry['address']) <1) : 
-                if DEBUG >= 1: 
-                    print("\tTry to find missing conference location of an IEEE conference")
+                printDEBUG(1, "\tTry to find missing conference location of an IEEE conference")
                 page = getContentFromURL(entry['url'])
                 if re.search(r'confLoc', page) :
-                    if DEBUG >= 1: 
-                        print("\tTrying to extract the confLoc data")
+                    printDEBUG(1, "\tTrying to extract the confLoc data")
                     if re.search(r'confLoc\":\"([\w,\s]+)\"', page) :
                         addressLocation = re.search(r'confLoc\":\"([\w,\s]+)\"', page)
                         entry['address'] = addressLocation[1] 
                         if DEBUG >= 1: 
                             print("\tFound conference location = " + entry['address'])   
                     else:
-                        if DEBUG >= 1: 
-                            print("\tCould not find conference location")   
+                        printDEBUG(1, "\tCould not find conference location")
  
-        # Put a checkpoint
-        get_linenumber() 
-
         # Specific to MDPI
         # Try to find the number of pages of MDPI documents 
         if entry['doi'].find("10.3390/") > -1:  # MDPI editor
-            if DEBUG >= 1:
-                print("\nThis is a paper by the MDPI editor: try to find the number of pages")
+            printDEBUG(1, "\nThis is a paper by the MDPI editor: try to find the number of pages")
             page = getContentFromURL(entry['url'])
             pdf_link = re.search(r'pdf_url" content="(.+)"', page)
             if DEBUG >= 1:
                 print("\tFound PDF link = ", pdf_link[1])
             response = requests.get(pdf_link[1])
-            num_pages = PyPDF2.PdfFileReader(io.BytesIO(response.content)).numPages
+            num_pages = len(PyPDF2.PdfReader(io.BytesIO(response.content)).pages)
 
             # Finally write the page count if any
             if num_pages > 0:
@@ -929,11 +894,9 @@ def get_entry(doi):
         # Specific to Elsevier
         # Try to find the page range when it is not given 
         if ( entry['doi'].find("10.1016/") > -1 ) and ( 'pages' in entry.keys() ) and ( entry['pages'].find("-") < 1 ) :  # Elsevier editor
-            if DEBUG >= 1:
-                print("\nThis is a paper by the Elsevier editor and try to find the page range instead of the article number")
+            printDEBUG(1, "\nThis is a paper by the Elsevier editor and try to find the page range instead of the article number")
             page = getContentFromURL(entry['url'])
-            if DEBUG >= 1:
-                print("\tAt the present time, the script is not able to replace the article number by the page range, due to javascript issues. Sorry...")
+            printDEBUG(1, "\tAt the present time, the script is not able to replace the article number by the page range, due to javascript issues. Sorry...")
 
         # Just a common change (my personal choice) 
         if 'pages' in entry.keys():
