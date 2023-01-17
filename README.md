@@ -48,7 +48,7 @@ After adding it, do not forget to make the file "executable" by a typical
 > chmod u+x doi2bib 
 
 
-### Proposal for abbreviations if not found. 
+### Proposal for abbreviations if not found 
 
 Some journals require you to mention journal or conference or names in an abbreviated format (or if you just want to compress your list of references to match the publisher's requirements...).
 Later to use a short abbreviation instead, it is sufficient to replace "abbreviation" by "abbreviation-short" in the bibliography LaTeX entry. 
@@ -59,7 +59,7 @@ becomes
 
 > \bibliography{bib/abbreviationshort,bib/myBiBTeXEntries}
 
-If no abbreviation is found in [abbreviation.bib](bib/abbreviation.bib), the doi2bib script will suggest an abbreviated format in the 'shortjournalproceedings' string, in addition to the complete name in the journal or proceedings string. This suggestion follows the LTWA standards and uses the file [abbrev.txt.gz](bib/_abbreviation_misc_/abbrev.txt.gz). 
+If no abbreviation is found in [abbreviation.bib](bib/abbreviation.bib), the doi2bib script will suggest an abbreviated format in the 'shortjournalproceedings' string, in addition to the complete name in the _journal_ or _proceedings_ string. This suggestion follows the LTWA standards and uses the file [abbrev.txt.gz](bib/_abbreviation_misc_/abbrev.txt.gz). 
 It is then up to you to decide on how to use this (either keep the suggestion or add it your own versions of the abbreviation/abbrebviation-short pair of files). 
 Note however that I will update the two files from time to time.
  
