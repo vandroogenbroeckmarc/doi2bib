@@ -525,6 +525,14 @@ def get_entry(doi):
             
             # Some hooks for detecting a series (because Springer's encoding is so poor...)
             page = getContentFromURL(entry['url'])
+            if page.find("series (ACVPR)") > -1:
+               if DEBUG >= 1:
+                   print("\tACVPR series detected")
+               entry['journal'] = "acvpr"
+            if page.find("AISC,volume") > -1:
+               if DEBUG >= 1:
+                   print("\tAISC series detected")
+               entry['series'] = "aisc"
             if page.find("CCIS,volume") > -1:
                if DEBUG >= 1:
                    print("\tCCIS series detected")
@@ -537,14 +545,10 @@ def get_entry(doi):
                if DEBUG >= 1:
                    print("\tLNCS series detected")
                entry['journal'] = "lncs"
-            if page.find("series (ACVPR)") > -1:
+            if page.find("LNEE,volume") > -1:
                if DEBUG >= 1:
-                   print("\tACVPR series detected")
-               entry['journal'] = "acvpr"
-            if page.find("AISC,volume") > -1:
-               if DEBUG >= 1:
-                   print("\tAISC series detected")
-               entry['series'] = "aisc"
+                   print("\tLNEE series detected")
+               entry['series'] = "lnee"
 
             # Some hooks for detecting a series (because Springer's encoding is so poor...)
             page = getContentFromURL(entry['url'])
