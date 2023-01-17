@@ -2,13 +2,13 @@
 
 Features of this package:
 - corrects misformed crossref fields given a DOI.
-- replaces keys (IDs) by a key nomenclature containind the first author'name, the year of publication and the first word(s) of the title. 
+- replaces keys (IDs) by a key nomenclature containing the first author'name, the year of publication and the first word(s) of the title. 
 - substitutes journal or proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
 - transform unicode characters into ASCII 7 bits characters.
 - handles capitalized letters in the title whenever possible.
 - guesses page numbers automatically when the web page mentions it or the PDF is available.
 - offers the possibility to switch from long names to short names (for journal or proceedings that have a _STRING_ macro).
-- works for many publishers and including preprints (arXiv, PsyArXiv, bioRxiv).
+- works for many publishers, including preprints (arXiv, PsyArXiv, bioRxiv).
 
 ## Examples on how to use it 
 
