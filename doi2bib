@@ -71,6 +71,7 @@ from bibtexparser.bwriter import BibTexWriter
 from bibtexparser.bparser import BibTexParser
 from bibtexparser.customization import homogenize_latex_encoding
 
+
 # To calculate the distance between strings
 import Levenshtein as lev
 
@@ -162,16 +163,14 @@ def darwin_data_home():
 
 def data_home(folder=None):
     platform = sys.platform
-    if DEBUG >= 2:
-        print("Platform = " + platform) 
+    printDEBUG(2, "Platform = " + platform) 
 
     if platform == 'win32':
         data_dir = windows_data_home()
         printDEBUG(2, "Windows platform")        
     elif platform == 'darwin':
         data_dir = darwin_data_home()
-        if DEBUG >= 2:
-           print("Mac OS platform: data_dir = " + data_dir)
+        printDEBUG(2, "Mac OS platform: data_dir = " + data_dir)
     else:
         data_dir = unix_data_home()
         printDEBUG(2, "Unix platform")        
@@ -183,8 +182,7 @@ def data_home(folder=None):
 
 def dl_abbrev(fname='abbrev.txt.gz'):
     url = LATEST_ISSN
-    if DEBUG >= 2:
-        print("Fecthing the file " + url + " to build abbrev.txt.gz")
+    printDEBUG(2, "Fecthing the file " + url + " to build abbrev.txt.gz")
     r = requests.get(url, allow_redirects=True)
     data = r.content
     directory = data_home('citation')
@@ -199,8 +197,7 @@ def load_abbrev(fname):
     """
     # Check if we have the abbreviations list
     target = os.path.join(data_home('citation'), fname)
-    if DEBUG >= 2:
-        print("TARGET = " + target)
+    printDEBUG(2, "TARGET = " + target)
 
     if not os.path.isfile(target):
         # print("%s not found; downloading..." % target, file=sys.stderr)
@@ -234,9 +231,8 @@ def journal_abbrev(name):
     """
     printDEBUG(2, "Loading abbreviation for journal as ")
     
-    if DEBUG >= 3:
-        print("Printing the full (long) list of abbreviations...")
-        print( load_abbrev(os.path.join(sys.path[0], "abbrev.txt.gz")) )
+    printDEBUG(3, "Printing the full (long) list of abbreviations...")
+    printDEBUG(3, load_abbrev(os.path.join(sys.path[0] + "abbrev.txt.gz")) )
 
     data = load_abbrev(os.path.join(sys.path[0], "abbrev.txt.gz"))
     n_abbrev = []
@@ -293,6 +289,7 @@ def getContentFromURL(url):
     charset=u.info().get_content_charset()
     return u.read().decode(charset)
 
+
 # -------------------------------------------------------------------------
 # Functions to "correct" crossref entries for specific editors
 # -------------------------------------------------------------------------
@@ -310,6 +307,74 @@ def handle_arXiV(entry):
     entry['url'] = "https://doi.org/" + entry['doi']
     return entry
 
+def handle_bioRxiv(entry):
+    printDEBUG(1, "bioRxiv entry")
+    entry['ID'] = entry['ID'] + "-bioRxiv"
+    entry['ENTRYTYPE'] = "article"
+    entry['journal'] = "bioRxiv"
+    entry['keywords'] = ''
+    entry['eprinttype'] = "bioRxiv"
+    return entry
+
+def handle_PsyArXiv(entry):
+    printDEBUG(1, "PsyArXiv entry")
+    entry['ID'] = entry['ID'] + "-psyarxiv"
+    entry['ENTRYTYPE'] = "article"
+    entry['journal'] = "psyarxiv"
+    entry['keywords'] = ''
+    entry['eprinttype'] = "PsyArXiv"
+    return entry
+
+def handle_PREPRINT(entry):
+    printDEBUG(1, "Preprint entry")
+    entry['ID'] = entry['ID'] + "-preprint"
+    entry['ENTRYTYPE'] = "article"
+    entry['journal'] = "PREPRINT"
+    entry['keywords'] = ''
+    entry['eprinttype'] = "PREPRINT"
+    return entry
+
+def handle_PsyArXiv(entry):
+    printDEBUG(1, "TechRxiv entry")
+    entry['ENTRYTYPE'] = "article"
+    entry['ID'] = entry['ID'] + "-techrxiv"
+    entry['journal'] = "TechRxiv"
+    entry['keywords'] = ''
+    entry['eprinttype'] = "TechRxiv"
+    return entry
+
+def handle_MDPI(entry):
+    printDEBUG(1, "\nThis is a paper by the MDPI editor: try to find the number of pages")
+    page = getContentFromURL(entry['url'])
+    pdf_link = re.search(r'pdf_url" content="(.+)"', page)
+    printDEBUG(1, "\tFound PDF link = " + pdf_link[1])
+    response = requests.get(pdf_link[1])
+    num_pages = len(PyPDF2.PdfReader(io.BytesIO(response.content)).pages)
+
+    # Finally write the page count if any
+    if num_pages > 0:
+         entry['pages'] = '1-' + str(num_pages)
+         printDEBUG(1, "\tFound page range = " + entry['pages'])
+    return entry
+
+from requests_html import HTMLSession
+def handle_ACM(entry):
+    if 'pages' not in entry.keys() :
+        session = HTMLSession()
+        resp = session.get(entry['url'])
+        # Run JavaScript code on webpage
+        resp.html.render()
+        page = resp.html.html
+        if re.search(r'Pages ', page) : 
+            page_range_full = re.search(r'>Pages\s+\d+–\d+<', page)
+            page_range = re.search(r'\d+–\d+', page_range_full[0])
+            entry['pages'] = page_range[0]
+            printDEBUG(1, "Found page range = " + entry['pages'])
+        else : 
+            entry['pages'] = ""
+
+    return entry    
+    
 # -------------------------------------------------------------------------
 # The main function
 def get_entry(doi):
@@ -574,9 +639,8 @@ def get_entry(doi):
                'series' in entry.keys() :
 
                    # Generic changes 
-                   if DEBUG >= 1: 
-                       print("Springer editor: changing entry type from article to inproceedings")
-                       print(" Found series = " + entry['journal']) 
+                   printDEBUG(1, "Springer editor: changing entry type from article to inproceedings")
+                   printDEBUG(1, " Found series = " + entry['journal']) 
 
                    entry['ENTRYTYPE'] = "inproceedings"
                    if not 'publisher' in entry.keys():
@@ -624,8 +688,7 @@ def get_entry(doi):
                        printDEBUG(1, "   found LNCVB series")                       
                        # Try to fetch the volume number 
                        if re.search(r'LNCVB,volume (.+)\)', page):
-                          if DEBUG >= 1: 
-                              print("\t try to find the volume number")
+                          printDEBUG(1, "\t try to find the volume number")
                           volumeText = re.search(r'LNCVB,volume (.+)\)', page)
                           entry['volume'] = volumeText.group(1)
                        # Try to guess the conference name
@@ -686,44 +749,21 @@ def get_entry(doi):
         if entry['doi'].find("10.48550/") > -1:  # arXiv
             entry = handle_arXiV(entry)
 
-        # Put a checkpoint
-        get_linenumber() 
-
         # Check for a bioRxiv document 
         if entry['doi'].find("10.1101/") > -1:  # bioRxiv
-            printDEBUG(1, "bioRxiv entry")
-            entry['ID'] = entry['ID'] + "-bioRxiv"
-            entry['ENTRYTYPE'] = "article"
-            entry['journal'] = "bioRxiv"
-            entry['keywords'] = ''
-            entry['eprinttype'] = "bioRxiv"
+            entry = handle_bioRxiv(entry)
 
         # Check for a Psy-arXiv document 
         if entry['doi'].find("10.31234/") > -1:  # Psy-arXiv
-            printDEBUG(1, "PsyArXiv entry")
-            entry['ID'] = entry['ID'] + "-psyarxiv"
-            entry['ENTRYTYPE'] = "article"
-            entry['journal'] = "psyarxiv"
-            entry['keywords'] = ''
-            entry['eprinttype'] = "PsyArXiv"
+            entry = handle_PsyArXiv(entry)
 
         # Check for a Research Square preprint document 
         if entry['doi'].find("10.21203/") > -1:  # Research Square
-            printDEBUG(1, "Preprint entry")
-            entry['ID'] = entry['ID'] + "-preprint"
-            entry['ENTRYTYPE'] = "article"
-            entry['journal'] = "PREPRINT"
-            entry['keywords'] = ''
-            entry['eprinttype'] = "PREPRINT"
+            entry = handle_PREPRINT(entry)
 
         # Check for a TechRxiv document
         if entry['doi'].find("10.36227/") > -1:  # TechRxiv
-            printDEBUG(1, "TechRxiv entry")
-            entry['ENTRYTYPE'] = "article"
-            entry['ID'] = entry['ID'] + "-techrxiv"
-            entry['journal'] = "TechRxiv"
-            entry['keywords'] = ''
-            entry['eprinttype'] = "TechRxiv"
+            entry = handle_TechRxiv(entry)
 
         # Put a checkpoint
         get_linenumber() 
@@ -737,12 +777,10 @@ def get_entry(doi):
             # First we try to remove a potential year number in the booktitle (that would reduce the match)
             year = entry['year'] + " "
             if entry['booktitle'].find(year) > -1:
-                if DEBUG > 0 : 
-                    print("Found year in booktitle; removing it")
-                    print("\tBefore removing it " +  entry['booktitle'] )
+                printDEBUG(1, "Found year in booktitle; removing it")
+                printDEBUG(1, "\tBefore removing it " +  entry['booktitle'] )
                 entry['booktitle'] = entry['booktitle'].replace(year, '')
-                if DEBUG > 0 : 
-                    print("\tAfter removing it " +  entry['booktitle'] + "\n")
+                printDEBUG(1, "\tAfter removing it " +  entry['booktitle'] + "\n")
             name = entry['booktitle']
             for abbr_key, abbr_text in abbr.items():
                 ratio = lev.ratio(name, abbr_text)
@@ -754,9 +792,8 @@ def get_entry(doi):
         if best_ratio > 0.8:
             booktitle_abbr = 1
             entry['booktitle'] = best_key    
-            if DEBUG >= 2:
-                print("Changing " + name + " by ")
-                print(abbr[best_key])
+            printDEBUB(2, "Changing " + name + " by ")
+            printDEBUG(2, abbr[best_key])
             if best_ratio < 0.9: 
                 print("\nVERIFY if correct: substituting\n\t" + name + " by\n\t " + abbr[best_key])
 
@@ -767,8 +804,7 @@ def get_entry(doi):
         if 'booktitle' in entry.keys():
             if entry['booktitle'] == 'icvpr' or entry['booktitle'] == 'icvprw': 
                 entry['address'] = switcher[ int(entry['year']) ] 
-                if DEBUG >= 0:
-                   print("Found icvpr and adding address " + entry['address'])
+                printDEBUG(1, "Found icvpr and adding address " + entry['address'])
                 entry['keywords'] = ''
                 del entry['shortjournalproceedings'] 
                 # Add an entry for pages if it does not exist
@@ -776,17 +812,8 @@ def get_entry(doi):
                     entry['pages'] = ''
 
         # Specific to ACM (that does not provide the page numbers in the fetched metadata)
-        if ( entry['doi'].find("10.1145/") > -1 and 'pages' not in entry.keys() ) :
-            printDEBUG(1, "\nThis is an ACM conference without the page numbers")
-            printDEBUG(1, "\nTrying to find missing pages from the web page")
-            # Try to find the start and end pages automagically
-            page = getContentFromURL(entry['url'])
-            if re.search(r'Pages ', page) : 
-                page_range_full = re.search(r'Pages\s+\d+–\d+', page)
-                page_range = re.search(r'\d+–\d+', page_range_full[0])
-                entry['pages'] = page_range[0]
-                if DEBUG >= 1:
-                   print("Found page range = " + entry['pages'])
+        if entry['doi'].find("10.1145/") > -1: 
+            handle_ACM(entry)
 
         # Put a checkpoint
         get_linenumber() 
@@ -819,27 +846,14 @@ def get_entry(doi):
                     if re.search(r'confLoc\":\"([\w,\s]+)\"', page) :
                         addressLocation = re.search(r'confLoc\":\"([\w,\s]+)\"', page)
                         entry['address'] = addressLocation[1] 
-                        if DEBUG >= 1: 
-                            print("\tFound conference location = " + entry['address'])   
+                        printDEBUG(1, "\tFound conference location = " + entry['address'])   
                     else:
                         printDEBUG(1, "\tCould not find conference location")
  
         # Specific to MDPI
         # Try to find the number of pages of MDPI documents 
         if entry['doi'].find("10.3390/") > -1:  # MDPI editor
-            printDEBUG(1, "\nThis is a paper by the MDPI editor: try to find the number of pages")
-            page = getContentFromURL(entry['url'])
-            pdf_link = re.search(r'pdf_url" content="(.+)"', page)
-            if DEBUG >= 1:
-                print("\tFound PDF link = ", pdf_link[1])
-            response = requests.get(pdf_link[1])
-            num_pages = len(PyPDF2.PdfReader(io.BytesIO(response.content)).pages)
-
-            # Finally write the page count if any
-            if num_pages > 0:
-               entry['pages'] = '1-' + str(num_pages)
-               if DEBUG >= 1:
-                   print("\tFound page range = " + entry['pages'])
+            entry = handle_MDPI(entry)
 
         # Put a checkpoint
         get_linenumber() 
@@ -851,8 +865,7 @@ def get_entry(doi):
         address = 0
         if 'address' in entry.keys():
             name = entry['address']
-            if DEBUG >= 1: 
-                print("\nTry to find abbreviated conference location for " + name )
+            printDEBUG(1, "\nTry to find abbreviated conference location for " + name )
             for abbr_key, abbr_text in abbr.items():
                 ratio = lev.ratio(name, abbr_text)
                 if ratio > best_ratio:
@@ -901,8 +914,7 @@ def get_entry(doi):
         if 'pages' in entry.keys():
             entry['pages'] = entry['pages'].replace("--", "-")
         if 'copyright' in entry.keys():
-            if DEBUG > 1: 
-                print("Deleting copyright " + entry['copyright'])
+            printDEBUG(1, "Deleting copyright " + entry['copyright'])
             del  entry['copyright']
 
         # Put a checkpoint
@@ -937,8 +949,7 @@ def get_entry(doi):
         bibtex_str = bibtex_str.replace('<title>', "") 
         bibtex_str = bibtex_str.replace('</title>', "") 
         bibtex_str = bibtex_str.replace('’', '\'') # Bad apostrophe...
-        # Ok, the next one is very very specific ;-)
-        bibtex_str = bibtex_str.replace("Droogenbroeck, M. Van", "Van Droogenbroeck, M.") 
+
         # Put back some {} around 2D and Gaussian for example
         # However, this must only be done on the line containing the title of the article
         lines = bibtex_str.split('\n')
@@ -961,8 +972,7 @@ def get_entry(doi):
 # -------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    if DEBUG > 0:
-        print("VERBOSITY LEVEL = " + str(DEBUG) )
+    printDEBUG(1, "VERBOSITY LEVEL = " + str(DEBUG) )
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument("doi", help=" DOI")
