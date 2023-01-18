@@ -89,8 +89,7 @@ def printDEBUG(debugLevel, string):
 
 def get_linenumber():
     cf = currentframe()
-    if DEBUG >= 2 :
-       print ( "This is line number = ", cf.f_back.f_lineno )
+    printDEBUG(2, "This is line number = " + str(cf.f_back.f_lineno) )
 
 # -------------------------------------------------------------------------
 # Some global variables
@@ -294,15 +293,28 @@ def getContentFromURL(url):
     charset=u.info().get_content_charset()
     return u.read().decode(charset)
 
+# -------------------------------------------------------------------------
+# Functions to "correct" crossref entries for specific editors
+# -------------------------------------------------------------------------
+def handle_arXiV(entry):
+    printDEBUG(1, "arXiv entry")
+    entry['ID'] = entry['ID'] + "-arxiv"
+    entry['ENTRYTYPE'] = "article"
+    entry['journal'] = "arxiv"
+    entry['keywords'] = ''
+    number = entry['doi'].replace("10.48550/ARXIV.", "")
+    entry['volume'] = "abs/" + number 
+    entry['eprint'] = number 
+    entry['eprinttype'] = "arXiv"
+    entry['doi'] = entry['doi'].replace("ARXIV", "arXiv")
+    entry['url'] = "https://doi.org/" + entry['doi']
+    return entry
 
 # -------------------------------------------------------------------------
 # The main function
 def get_entry(doi):
     url = f"https://doi.org/{doi}"
-    if DEBUG >= 1:
-        print("Fetching " + url)
-        # Put a checkpoint
-        get_linenumber()
+    printDEBUG(1, "Fetching " + url)
 
     raw = requests.get(url, \
         headers={'Accept':'text/x-bibliography;style=bibtex'}, timeout=200)  # // before 2022-10-27
@@ -313,21 +325,22 @@ def get_entry(doi):
     if raw.status_code != 200:
         print("The returned status code of the metadata server is wrong: " + str(raw.status_code) + " instead of 200")
     else:
-        if DEBUG >= 1:
-            print("\treturn code of the fetched metadata is ok (" + str(raw.status_code) + "); proceeding with analysis")
-        if DEBUG >= 2:
-            print("Raw content is " + raw.content.decode('utf-8'))
+        printDEBUG(1, "\treturn code of the fetched metadata is ok (" + str(raw.status_code) + "); proceeding with analysis")
+        printDEBUG(2, "Raw content is " + raw.content.decode('utf-8'))
 
     if raw.ok and raw.status_code == 200:
         parser = BibTexParser()
         parser.customization = homogenize_latex_encoding
         parser.common_strings = True
-        db = bibtexparser.loads(raw.content.decode('utf-8'), parser=parser)
+        content = raw.content.decode('utf-8')
+        if doi.find("10.48550/") > -1:  # Problem with some ID fields with arXiv
+            content = re.sub("{(.*), title", "{IDToBeReplaced, title", content)
+        db = bibtexparser.loads(content, parser=parser)
         if len(db.entries) >= 1: 
             entry = db.entries[0]
         else :
-            print("\nRaw content is " + raw.content.decode('utf-8') + "\n")
-            print("This is a misformed BiBTeX entry... exiting")
+            print("\nRaw content is " + content + "\n")
+            print("This is a missformed BiBTeX entry... exiting")
             exit()
 
         printDEBUG(1, "Just fetched: ")
@@ -349,8 +362,8 @@ def get_entry(doi):
         # Find abbreviation
         if 'journal' in entry.keys():
             journalName = entry['journal']
-            if journalName.find('&amp;'):
-                printDEBUG(0, "Replacing &amp by & in the journal name")
+            if journalName.find('&amp;') != -1:
+                printDEBUG(1, "Replacing &amp by & in the journal name")
                 journalName = journalName.replace('&amp;','&')
                 entry['journal'] = journalName 
             jabbr = journal_abbrev(entry['journal'])
@@ -393,12 +406,11 @@ def get_entry(doi):
 
             # Check to see if the key is not too short
             if len(entry['title'].split()[0])<=3 :
-                if DEBUG >= 1:
-                    print("Current ID of this entry (" + newKey + ") is too short")
+                printDEBUG(1, "Current ID of this entry (" + newKey + ") is too short")
                 if len(entry['title'].split()) >=1 : 
                     newKey = newKey + entry['title'].split()[1].capitalize()
                 else:
-                    print("Current title is too short to add some extra content")
+                    printDEBUG(1, "Current title is too short to add some extra content")
 
             # Clean up the author name (accent, space, -, etc)
             newKey = newKey.replace(' ','')
@@ -411,8 +423,7 @@ def get_entry(doi):
             newKey = newKey.replace("{\\`a}",'a')
             # firstline = firstline.replace(oldkey, newKey) 
             # content = content + [firstline]
-            if DEBUG >= 1:
-                print("Replacing ID key " + oldkey + " by " + newKey)
+            printDEBUG(1, "Replacing ID key " + oldkey + " by " + newKey)
             entry['ID'] = newKey 
         
         printDEBUG(2, "Before processing but after changing the ID key")
@@ -495,17 +506,15 @@ def get_entry(doi):
             for abbr_key, abbr_text in abbr.items():
                 ratio = lev.ratio(name, abbr_text)
                 if ratio > best_ratio:
-                    if DEBUG >= 1:
-                        print( "Current best match for [" + name + "]: " + abbr_text + " ( " + abbr_key + ") -> " + str(ratio))
+                    printDEBUG(1, "Current best match for [" + name + "]: " + abbr_text + " ( " + abbr_key + ") -> " + str(ratio))
                     best_ratio = ratio
                     best_key = abbr_key
                     best_value = abbr_text
         # We have found the best match 
         if best_ratio > 0.95 or ( best_ratio > 0.8 and len(abbr[best_key]) > 40 ):
-            if DEBUG >= 2:
-                print("Changing " + name + " by ")
+            printDEBUG(2, "Changing " + name + " by ")
             printDEBUG(2, abbr[best_key])
-            if best_ratio < 0.9: 
+            if best_ratio < 0.98: 
                 print("\nIMPORTANT NOTE -- VERIFY if this is correct: substituting\n\t" + name + " by\n\t " + abbr[best_key])
             entry['journal'] = best_key    
             journal = 1
@@ -675,17 +684,7 @@ def get_entry(doi):
 
         # Check for an arXiv document 
         if entry['doi'].find("10.48550/") > -1:  # arXiv
-            printDEBUG(1, "arXiv entry")
-            entry['ID'] = entry['ID'] + "-arxiv"
-            entry['ENTRYTYPE'] = "article"
-            entry['journal'] = "arxiv"
-            entry['keywords'] = ''
-            number = entry['doi'].replace("10.48550/ARXIV.", "")
-            entry['volume'] = "abs/" + number 
-            entry['eprint'] = number 
-            entry['eprinttype'] = "arXiv"
-            entry['doi'] = entry['doi'].replace("ARXIV", "arXiv")
-            entry['url'] = "https://doi.org/" + entry['doi']
+            entry = handle_arXiV(entry)
 
         # Put a checkpoint
         get_linenumber() 
