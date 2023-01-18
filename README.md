@@ -1,6 +1,6 @@
 # doibib : yet another tool to generate a BiBTeX entry based on a DOI
 
-Features of this package:
+## Features of this package:
 - corrects misformed crossref fields given a DOI.
 - replaces keys (IDs) by a key nomenclature containing the first author'name, the year of publication and the first word(s) of the title. 
 - substitutes journal or proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
@@ -63,6 +63,69 @@ If no abbreviation is found in [abbreviation.bib](bib/abbreviation.bib), the doi
 It is then up to you to decide on how to use this (either keep the suggestion or add it your own versions of the abbreviation/abbrebviation-short pair of files). 
 Note however that I will update the two files from time to time.
  
+## Some excellent reasons to prefer doi2bib to what google scholar provides
+
+(1) While Google scholar allows to retrieve a good BiBTeX entry, most of the time it is not complete. 
+
+- For example, for journal entries, the month field is missing. See for example:
+> @article{barnich2010vibe,
+> title={ViBe: A universal background subtraction algorithm for video sequences},
+> author={Barnich, Olivier and Van Droogenbroeck, Marc},
+> journal={IEEE Transactions on Image processing},
+> volume={20},
+> number={6},
+> pages={1709--1724},
+> year={2010},
+> publisher={IEEE}
+> }
+
+- For a conference entry, the month, address. and publisher fields are missing. 
+> @inproceedings{cioppa2020context,
+> title={A context-aware loss function for action spotting in soccer videos},
+> author={Cioppa, Anthony and Deliege, Adrien and Giancola, Silvio and Ghanem, Bernard and Droogenbroeck, Marc Van and Gade, Rikke and Moeslund, Thomas B},
+> booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+> pages={13126--13136},
+> year={2020}
+> }
+
+Also: 
+- Titles provided by google do not handle capitalized letters properly. For example, “Gaussian” should always be “{G}ausssian”. 
+- authors lists are truncated, see 
+> @inproceedings{giancola2022soccernet,
+> title={SoccerNet 2022 Challenges Results},
+> author={Giancola, Silvio and Cioppa, Anthony and Deli{\`e}ge, Adrien and Magera, Floriane and Somers, Vladimir and Kang, Le and Zhou, Xin and Barnich, Olivier and De Vleeschouwer, Christophe and Alahi, Alexandre and others},
+> booktitle={Proceedings of the 5th International ACM Workshop on Multimedia Content Analysis in Sports},
+> pages={75--86},
+> year={2022}
+> }
+- For axXiv entries, scholar provides 
+> @article{deliege2018hitnet,
+> title={Hitnet: a neural network with capsules embedded in a hit-or-miss layer, extended with hybrid data augmentation and ghost capsules},
+> author={Deliege, Adrien and Cioppa, Anthony and Van Droogenbroeck, Marc},
+> journal={arXiv preprint arXiv:1806.06519},
+> year={2018}
+> }
+
+to be compared to what is given by doi2bib
+
+> @article{Deliege2018HitNet-arxiv,
+>	title = {{HitNet}: a neural network with capsules embedded in a Hit-or-Miss layer, extended with hybrid data augmentation and ghost capsules},
+>	author = {Deli{\`e}ge, Adrien and Cioppa, Anthony and Van Droogenbroeck, Marc},
+>	journal = arxiv,
+>	volume = {abs/1806.06519},
+>	year = {2018},
+>	publisher = {arXiv},
+>	eprint = {1806.06519},
+>	keywords = {},
+>	eprinttype = {arXiv},
+>	doi = {10.48550/arXiv.1806.06519},
+>	url = {https://doi.org/10.48550/arXiv.1806.06519}
+> }
+
+
+Finally, so useful doi or url field are useful but not provided by scholar.  
+
+(2) Handling macro strings is not done by usual BiBTeX generator. However, macros help guaranteeing some consistency between references and also allow to replace “long” versions of strings (like "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)") by their shorter versions ("IEEE/CVF Conf. Comput. Vis. and Pattern Recogn. (CVPR)”). 
 
 ## Use at your own risks... 
 
