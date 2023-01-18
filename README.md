@@ -14,7 +14,7 @@
 
 > doi2bib 10.1109/TIP.2010.2101613  _(simple usage)_ <br>
 > doi2bib -v 10.1109/CVPR42600.2020.01314  _(simple usage, moderate verbosity)_ <br>
-> doi2bib -vv https://doi.org/10.48550/arXiv.2210.02365  _(with the complete URL, verbose mode)_ <br>
+> doi2bib -vv https://doi.org/10.1145/3552437.3558545 _(with the complete URL, verbose mode)_ <br>
 
 ## Instructions for installation
 
