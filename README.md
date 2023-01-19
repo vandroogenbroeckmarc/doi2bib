@@ -32,10 +32,10 @@ For that you need to inform doi2bib of the availability of [abbreviation.bib](bi
 
 For linux and MacOSX systems, the steps to follow are:
 
-- edit your ".zshrc" file (adapt this to your favorite shell if you use another one; to find out which SHELL you are using, just run _printenv SHELL_ in a terminal).
+- edit your ".zshrc" ou ".bashrc" file (adapt this to your favorite shell if you use another one; to find out which SHELL you are using, just run _printenv SHELL_ in a terminal).
 - add the following line (after adaptation): 
-export BIBLIOGRAPHYDIR='/home/me/utilityPath/doi2bib' 
-- copy the bib directory to /home/me/utilityPath/doi2bib
+export BIBLIOGRAPHYDIR='/home/me/utilityPath/doi2bib/' 
+- copy the bib directory to /home/me/utilityPath/doi2bib/
 - start a new terminal and check if your variable has been set correctly by 
 > printenv BIBLIOGRAPHYDIR
 
@@ -93,7 +93,7 @@ Also:
 - authors lists are truncated, see 
 > @inproceedings{giancola2022soccernet,
 > title={SoccerNet 2022 Challenges Results},
-> author={Giancola, Silvio and Cioppa, Anthony and Deli{\`e}ge, Adrien and Magera, Floriane and Somers, Vladimir and Kang, Le and Zhou, Xin and Barnich, Olivier and De Vleeschouwer, Christophe and Alahi, Alexandre and others},
+> author={Giancola, Silvio and Cioppa, Anthony and Deli{\\`e}ge, Adrien and Magera, Floriane and Somers, Vladimir and Kang, Le and Zhou, Xin and Barnich, Olivier and De Vleeschouwer, Christophe and Alahi, Alexandre and others},
 > booktitle={Proceedings of the 5th International ACM Workshop on Multimedia Content Analysis in Sports},
 > pages={75--86},
 > year={2022}
@@ -110,7 +110,7 @@ to be compared to what is given by doi2bib
 
 > @article{Deliege2018HitNet-arxiv,
 >	title = {{HitNet}: a neural network with capsules embedded in a Hit-or-Miss layer, extended with hybrid data augmentation and ghost capsules},
->	author = {Deli{\`e}ge, Adrien and Cioppa, Anthony and Van Droogenbroeck, Marc},
+>	author = {Deli{\\`e}ge, Adrien and Cioppa, Anthony and Van Droogenbroeck, Marc},
 >	journal = arxiv,
 >	volume = {abs/1806.06519},
 >	year = {2018},
@@ -123,19 +123,19 @@ to be compared to what is given by doi2bib
 > }
 
 
-Finally, so useful doi or url field are useful but not provided by scholar.  
+Finally, so useful doi or url fields are useful but not provided by scholar.  
 
-(2) Handling macro strings is not done by usual BiBTeX generator. However, macros help guaranteeing some consistency between references and also allow to replace “long” versions of strings (like "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)") by their shorter versions ("IEEE/CVF Conf. Comput. Vis. and Pattern Recogn. (CVPR)”). 
+(2) Handling macro strings is not done by usual BiBTeX generators. However, macros help guaranteeing some consistency between references and also allow to replace “long” versions of strings (like "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)") by their shorter versions ("IEEE/CVF Conf. Comput. Vis. and Pattern Recogn. (CVPR)”). 
 
 ## Use at your own risks... 
 
-I did my best to limit the amount of manual corrections but, believe me, crossref fields given a DOI are quite often wrongly encoded (even by well-known publishers...). Therefore, they will be mistakes in some BiBTeX entries, although in my daily practice more than 9 out of 10 references are rightly encoded. 
-Suggestions for improvements are obviously welcome.  
+I did my best to limit the amount of manual corrections but, believe me, crossref fields given a DOI are quite often wrongly encoded (even by well-known publishers...). Therefore, there will be mistakes in some BiBTeX entries, although in my daily practice more than 9 out of 10 references are rightly encoded. 
+Suggestions for improvement are obviously welcome !  
 
 
 ## Disclaimer 
 
-I have used some initial code (largely modified though) from a github site that I cannot trace back. If you are the person who wrote that code, please let me know and I will give you the proper credit. I am also grateful to all the kind developers who makes their code available and to this extraordinary community! 
+I have used some initial code (largely modified though) from a github site that I cannot trace back. If you are the person who wrote that code, please let me know and I will give you the proper credit. Last but not least, I am also very grateful to all the kind developers who make their code available and to this extraordinary community! 
 
 Enjoy! 
 
