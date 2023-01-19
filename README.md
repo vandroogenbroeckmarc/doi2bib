@@ -4,7 +4,7 @@
 - corrects misformed crossref fields given a DOI.
 - replaces keys (IDs) by a key nomenclature containing the first author'name, the year of publication and the first word(s) of the title. 
 - substitutes journal or proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
-- transform unicode characters into ASCII 7 bits characters.
+- transforms unicode characters into ASCII 7 bits characters.
 - handles capitalized letters in the title whenever possible.
 - guesses page numbers automatically when the web page mentions it or the PDF is available.
 - offers the possibility to switch from long names to short names (for journal or proceedings that have a _STRING_ macro).
@@ -35,7 +35,7 @@ For linux and MacOSX systems, the steps to follow are:
 - edit your ".zshrc" ou ".bashrc" file (adapt this to your favorite shell if you use another one; to find out which SHELL you are using, just run _printenv SHELL_ in a terminal).
 - add the following line (after adaptation): 
 export BIBLIOGRAPHYDIR='/home/me/utilityPath/doi2bib/' 
-- copy the bib directory to /home/me/utilityPath/doi2bib/
+- copy the bib directory to /home/me/utilityPath/doi2bib/ if this directory is not where you have cloned doi2bib
 - start a new terminal and check if your variable has been set correctly by 
 > printenv BIBLIOGRAPHYDIR
 
@@ -126,6 +126,10 @@ to be compared to what is given by doi2bib
 Finally, so useful doi or url fields are useful but not provided by scholar.  
 
 (2) Handling macro strings is not done by usual BiBTeX generators. However, macros help guaranteeing some consistency between references and also allow to replace “long” versions of strings (like "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)") by their shorter versions ("IEEE/CVF Conf. Comput. Vis. and Pattern Recogn. (CVPR)”). 
+
+### Future plans
+
+Obviously, the main plan is to allow a kind-of _pip3 install this_package_. Unfortunately, the doi2bib is already used by another package. So, I still need to find a workaround. 
 
 ## Use at your own risks... 
 
