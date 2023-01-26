@@ -792,7 +792,7 @@ def get_entry(doi):
         if best_ratio > 0.8:
             booktitle_abbr = 1
             entry['booktitle'] = best_key    
-            printDEBUB(2, "Changing " + name + " by ")
+            printDEBUG(2, "Changing " + name + " by ")
             printDEBUG(2, abbr[best_key])
             if best_ratio < 0.9: 
                 print("\nVERIFY if correct: substituting\n\t" + name + " by\n\t " + abbr[best_key])
