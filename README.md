@@ -2,7 +2,7 @@
 
 ## Features of this package:
 - corrects misformed crossref fields given a DOI.
-- replaces keys (IDs) by a key nomenclature containing the first author'name, the year of publication and the first word(s) of the title. 
+- replaces keys (IDs) by a key nomenclature containing the first author's name, the year of publication, and the first word(s) of the title. 
 - substitutes journal/proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
 - transforms unicode characters (utf-8) into ASCII 7 bits characters.
 - handles capitalized letters in the title (whenever possible).
