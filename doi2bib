@@ -48,7 +48,7 @@ cities = ['Brussels', 'Oxford']
 countries  = ['American', 'China', 'Chinese', 'Europe']
 names = ['Bernoulli','Carlo', 'Gaussian', 'Fourier', 'Gemini', 'Hough', 'Laplace', 'Laplacian', 'Markov', 'Minkowski', 'Monte', 'Shannon', 'Viterbi']
 multid = ['2D', '2-D', '2D/3D', '3D', '3-D']
-algorithm = ['Vibe', 'ViBe', 'RPCA', 'PCA', 'ITS', 'Yolo']
+algorithm = ['Vibe', 'ITS', 'Yolo']
 keysTitle = ['A', 'The', 'In', 'From']
  
 # ----------- End of added variables by Marc Van Droogenbroeck ------------
@@ -546,7 +546,7 @@ def get_entry(doi):
         entry['url'] = entry['url'].replace("\\", "")
         entry['title'] = entry['title'].replace("\\textquotesingle ", "'")
         # Add {} around uppercases that are not at the beginning of a word
-        for item in re.findall('\w+[A-Z]+\w+|[A-Z][A-Z]+', entry['title']):
+        for item in re.findall('\w+[A-Z]+\w+|[A-Z][A-Z]+|\w+\-\w+\-[A-Z]\w+|\w+\-[A-Z]+\w+', entry['title']):
              entry['title'] = entry['title'].replace(item,"{" + item + "}")
         # Remove some of the useless keys
         if 'abstractnote' in entry.keys():    
