@@ -3,10 +3,10 @@
 ## Features of this package:
 - corrects misformed crossref fields given a DOI.
 - replaces keys (IDs) by a key nomenclature containing the first author'name, the year of publication and the first word(s) of the title. 
-- substitutes journal or proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
-- transforms unicode characters into ASCII 7 bits characters.
-- handles capitalized letters in the title whenever possible.
-- guesses page numbers automatically when the web page mentions it or the PDF is available.
+- substitutes journal/proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
+- transforms unicode characters (utf-8) into ASCII 7 bits characters.
+- handles capitalized letters in the title (whenever possible).
+- guesses page numbers automatically when the web page mentions it or when the PDF is publicly available.
 - offers the possibility to switch from long names to short names (for journal or proceedings that have a _STRING_ macro).
 - works for many publishers, including preprints (arXiv, PsyArXiv, bioRxiv).
 
@@ -26,7 +26,7 @@
 
 ### Additional features
 
-This "doi2bib" version is *tuned* for the scientific domains of electrical engineering and computer sciences, but should work for many other domains as well --if only NIPS and ICLR were using DOIs as well... 
+This "doi2bib" version was initially *tuned* for the scientific domains of electrical engineering and computer sciences, but should work for many other domains as well --if only NIPS and ICLR were using DOIs as well... 
 To help improving the consistency of references, there is a list of abbreviations named [abbreviation.bib](bib/abbreviation.bib) (with his companion's file of short abbreviations [abbreviation-short.bib](bib/abbreviation-short.bib)) that will automatically be substituted if detected. 
 For that you need to inform doi2bib of the availability of [abbreviation.bib](bib/abbreviation.bib). 
 
@@ -50,8 +50,8 @@ After adding it, do not forget to make the file "executable" by a typical
 
 ### Proposal for abbreviations if not found 
 
-Some journals require you to mention journal or conference or names in an abbreviated format (or if you just want to compress your list of references to match the publisher's requirements...).
-Later to use a short abbreviation instead, it is sufficient to replace "abbreviation" by "abbreviation-short" in the bibliography LaTeX entry. 
+Some journals require you to mention journal/conference names in an abbreviated format (or if you just want to compress your list of references to match the publisher's requirements in terms of page numbers...).
+Later to use a short abbreviation instead, you only need to replace "abbreviation" by "abbreviation-short" in the bibliography LaTeX entry. 
 For example (please note that abbreviation must be the first name in the list!), 
 > \bibliography{bib/abbreviation,bib/myrefs}
 
@@ -59,13 +59,13 @@ becomes
 
 > \bibliography{bib/abbreviationshort,bib/myBiBTeXEntries}
 
-If no abbreviation is found in [abbreviation.bib](bib/abbreviation.bib), the doi2bib script will suggest an abbreviated format in the 'shortjournalproceedings' string, in addition to the complete name in the _journal_ or _proceedings_ string. This suggestion follows the LTWA standards and uses the file [abbrev.txt.gz](bib/_abbreviation_misc_/abbrev.txt.gz). 
+If no abbreviation is found in [abbreviation.bib](bib/abbreviation.bib), the doi2bib script will suggest an abbreviated format in the _shortjournalproceedings_ string, in addition to the complete name in the _journal_ or _proceedings_ string. This suggestion follows the LTWA standards and uses the file [abbrev.txt.gz](bib/_abbreviation_misc_/abbrev.txt.gz). 
 It is then up to you to decide on how to use this (either keep the suggestion or add it your own versions of the abbreviation/abbrebviation-short pair of files). 
 Note however that I will update the two files from time to time.
  
 ## Some excellent reasons to prefer doi2bib to what google scholar provides
 
-(1) While Google scholar allows to retrieve a good BiBTeX entry, most of the time it is not complete. 
+(1) While Google scholar allows to retrieve an acceptable BiBTeX entry, most of the time further manual editing is required. 
 
 - For example, for journal entries, the month field is missing. See for example:
 > @article{barnich2010vibe,
@@ -89,7 +89,7 @@ Note however that I will update the two files from time to time.
 > }
 
 Also: 
-- Titles provided by google do not handle capitalized letters properly. For example, “Gaussian” should always be “{G}ausssian”. 
+- Titles provided by google do not handle capitalized letters properly. For example, “Gaussian” should always be “{Gausssian}” (or “{G}ausssian”). 
 - authors lists are truncated, see 
 > @inproceedings{giancola2022soccernet,
 > title={SoccerNet 2022 Challenges Results},
@@ -109,7 +109,7 @@ Also:
 to be compared to what is given by doi2bib
 
 > @article{Deliege2018HitNet-arxiv,
->	title = {{HitNet}: a neural network with capsules embedded in a Hit-or-Miss layer, extended with hybrid data augmentation and ghost capsules},
+>	title = {{HitNet}: a neural network with capsules embedded in a {Hit-or-Miss} layer, extended with hybrid data augmentation and ghost capsules},
 >	author = {Deli{\\`e}ge, Adrien and Cioppa, Anthony and Van Droogenbroeck, Marc},
 >	journal = arxiv,
 >	volume = {abs/1806.06519},
@@ -125,11 +125,11 @@ to be compared to what is given by doi2bib
 
 Finally, so useful doi or url fields are useful but not provided by scholar.  
 
-(2) Handling macro strings is not done by usual BiBTeX generators. However, macros help guaranteeing some consistency between references and also allow to replace “long” versions of strings (like "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)") by their shorter versions ("IEEE/CVF Conf. Comput. Vis. and Pattern Recogn. (CVPR)”). 
+(2) Handling macro strings is not done by "commercial" BiBTeX generators. However, macros help guaranteeing some consistency between references and also allow to replace “long” versions of strings (like "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)") by their shorter versions ("IEEE/CVF Conf. Comput. Vis. and Pattern Recogn. (CVPR)”). 
 
 ### Future plans
 
-Obviously, the main plan is to allow a kind-of _pip3 install this_package_. Unfortunately, the doi2bib is already used by another package. So, I still need to find a workaround. 
+Obviously, the main plan is to allow a kind-of _pip3 install this_package_. Unfortunately, the doi2bib is already used by another package. So, I still need to find a workaround. I will, so stay tuned.
 
 ## Use at your own risks... 
 
