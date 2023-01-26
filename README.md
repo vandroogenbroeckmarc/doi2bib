@@ -79,7 +79,7 @@ Note however that I will update the two files from time to time.
 > publisher={IEEE}
 > }
 
-- For a conference entry, the month, address. and publisher fields are missing. 
+- For a conference entry, the month, address (location), and publisher fields are missing. 
 > @inproceedings{cioppa2020context,
 > title={A context-aware loss function for action spotting in soccer videos},
 > author={Cioppa, Anthony and Deliege, Adrien and Giancola, Silvio and Ghanem, Bernard and Droogenbroeck, Marc Van and Gade, Rikke and Moeslund, Thomas B},
