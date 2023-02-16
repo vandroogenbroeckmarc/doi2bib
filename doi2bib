@@ -343,6 +343,15 @@ def handle_PsyArXiv(entry):
     entry['eprinttype'] = "TechRxiv"
     return entry
 
+def handle_research_archive(entry):
+    printDEBUG(1, "Research Archive of Rising Scholars entry")
+    entry['ENTRYTYPE'] = "article"
+    entry['ID'] = entry['ID'] + "-research-archive"
+    entry['journal'] = "research-archive"
+    entry['keywords'] = ''
+    entry['eprinttype'] = "Research Archive of Rising Scholars"
+    return entry
+
 def handle_MDPI(entry):
     printDEBUG(1, "\nThis is a paper by the MDPI editor: try to find the number of pages")
     page = getContentFromURL(entry['url'])
@@ -757,6 +766,10 @@ def get_entry(doi):
         # Check for a Psy-arXiv document 
         if entry['doi'].find("10.31234/") > -1:  # Psy-arXiv
             entry = handle_PsyArXiv(entry)
+
+        # Check for a Research Archive of Rising Scholars document 
+        if entry['doi'].find("10.58445/") > -1:  #  research_archive
+            entry = handle_research_archive(entry)
 
         # Check for a Research Square preprint document 
         if entry['doi'].find("10.21203/") > -1:  # Research Square
