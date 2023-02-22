@@ -57,7 +57,7 @@ For example (please note that abbreviation must be the first name in the list!),
 
 becomes
 
-> \bibliography{bib/abbreviationshort,bib/myBiBTeXEntries}
+> \bibliography{bib/abbreviation-short,bib/myBiBTeXEntries}
 
 If no abbreviation is found in [abbreviation.bib](bib/abbreviation.bib), the doi2bib script will suggest an abbreviated format in the _shortjournalproceedings_ string, in addition to the complete name in the _journal_ or _proceedings_ string. This suggestion follows the LTWA standards and uses the file [abbrev.txt.gz](bib/_abbreviation_misc_/abbrev.txt.gz). 
 It is then up to you to decide on how to use this (either keep the suggestion or add it your own versions of the abbreviation/abbrebviation-short pair of files). 
