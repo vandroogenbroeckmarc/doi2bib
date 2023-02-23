@@ -1,0 +1,283 @@
+#!/usr/bin/env python3
+
+import argparse
+import re
+import gzip
+import datetime 
+
+IGNORELIST = [
+    "ab", "and", "at", "for", "in",  "of", "on", "to", "the", "um", 
+    "with", "&"
+]   
+
+abbreviations = {
+    "January" : "Jan.",
+    "February" : "Feb.",
+    "March" : "Mar.",
+    "April" : "Apr.",
+    "June" : "Jun.",
+    "July" : "Jul.",
+    "August" : "Aug.",
+    "September" : "Sept.",
+    "October" : "Oct.",
+    "November" : "Nov.",
+    "December" : "Dec.",
+    "first" : "1st",
+    "Association Nationale de la Recherche Technique" : "Association Nationale de la Recherche Technique",
+    "Brooks/Cole Publishing Company" : "Brooks/Cole Publ. Co.",
+    "O'Reilly \& Associates" : "O'Reilly \& Assoc.",
+    ", Alaska," : ", AK,",
+    ", Colorado," : ", CO,",
+    ", California," : ", CA,",
+    ", District of Columbia," : ", DC,",
+    ", Florida," : ", FL,",
+    ", Hawaii," : ", HI,",
+    ", Illinois," : ", IL,",
+    ", Louisiana," : ", LA,",
+    ", Massachusetts," : ", MA,",
+    ", Nevada," : ", NV,",
+    ", Ohio," : ", OH,",
+    ", New York," : ", NY,",
+    ", Pennsylvania," : ", PA,",
+    ", Rhode Island," : ", RI,",
+    ", Tennessee," : ", TN,",
+    ", Texas," : ", TX,",
+    ", Utah," : ", UT,",
+    ", Washington," : ", WA,",
+}
+
+abbreviations_constant = [
+    "Addison-Wesley", 
+]
+
+def replace_abbreviations(input_string):
+    """
+    Replaces a string that matches a key in a dictionary with the corresponding key.
+
+    Arguments:
+    input_string -- a single string
+
+    Returns:
+    A boolearn telling if a substitution has occurred and A string with a substitution
+    """
+    
+    for string in abbreviations_constant:
+        if input_string == string:
+            return True, input_string
+        elif any(substring == string for substring in input_string.split(", ")):
+            return True, input_string
+        elif any(substring == string for substring in input_string.split("-")):
+            return True, input_string
+        elif any(substring == string for substring in input_string.split("\' ")):
+            return True, input_string
+        elif any(substring == string for substring in input_string.split(" \'")):
+            return True, input_string
+
+    matchFound = False
+    output_string = input_string
+    for key, value in abbreviations.items():
+        pattern = re.escape(key)  # Escape special characters in key
+        match = re.search(pattern, output_string)
+        if match:
+            output_string = output_string[:match.start()] + value + output_string[match.end():]
+            matchFound = True
+ 
+    if matchFound: 
+        return True, output_string
+    else: 
+        return False, input_string
+
+def load_abbrev(fname):
+    # Load the abbreviations database into memory
+    data = {}
+    try:
+        with gzip.open(fname, 'rt', encoding="utf-16") as f:
+            for line in f:
+                # usually the first line starts with WORD
+                if line.startswith('WORD'):
+                    continue
+                parts = line.split("\t")
+                langs = parts[2].split(", ")
+                jname = parts[0]
+                jabbrev = parts[1]
+                data[jname.lower()] = jabbrev.lower()
+    except FileNotFoundError:
+        raise FileNotFoundError("The abbreviations file is not available.")
+    return data
+
+def journal_abbrev(name, data):
+    """
+    Abbreviates a journal title
+    """
+
+    # First we check if we should not skip a string
+    replaced, output_string = replace_abbreviations(name)
+    if replaced: 
+        return output_string 
+
+    # Not match was found in the dictionary, so proceed.
+    n_abbrev = []
+
+    (name1, _, name2) = name.partition(": ")
+    parts = re.split("\s+", name1)
+    if len(name2) >= 1:
+        parts2 = re.split("\s+", name2)
+        parts = parts + [":"] + parts2
+
+    if len(parts) == 1 and len(parts[0]) < 12:
+        return name
+    for word in parts:
+        # Do not abbreviate wordsin the IGNORELIST
+        if word.lower() in IGNORELIST:
+            continue
+        for (k,v) in data.items():
+            found = False
+
+            # If the key ends with - it means we are checking for a prefix
+            if k.endswith("-"):
+                if word.lower().startswith(k[:-1]):
+                    if v != "n.a.":
+                        n_abbrev.append(v.capitalize())
+                    else:
+                        n_abbrev.append(word.lower().capitalize())
+                    found = True
+                    break
+            # Else we are checking for a whole match
+            else:
+                if word.lower() == k:
+                    if v != "n.a.":
+                        n_abbrev.append(v.capitalize())
+                    else:
+                        n_abbrev.append(word.lower().capitalize())
+                    found = True
+                    break
+
+        if not found:
+            # If all characters are uppercase leave as is
+            if not word.isupper():
+                n_abbrev.append(word.capitalize())
+            else:
+                n_abbrev.append(word)
+
+    str = " ".join(n_abbrev)
+    if " : " in str: 
+        str = str.replace(" : ", ": ")
+    # Corrections due to mistakes in the previous translation
+    if "Remote. " in str: 
+        str = str.replace("Remote. ", "Remote ")
+    if "~e" in str: 
+        str = str.replace("~e", "~E")
+    if "~f" in str: 
+        str = str.replace("~f", "~F")
+    if "~i" in str: 
+        str = str.replace("~i", "~I")
+    if "Vision," in str: 
+        str = str.replace("Vision,", "Vis.")
+    if "(ijes)" in str: 
+        str = str.replace("ijes", "iJES")
+    if "Plos" in str: 
+        str = str.replace("Plos", "PLoS")
+    if "Photo-instrumentation" in str: 
+        str = str.replace("Photo-instrumentation", "Photo-Instrumentation")
+    if "Cyber-physical" in str: 
+        str = str.replace("Cyber-physical", "Cyber-Physical")
+    if "Real-time" in str: 
+        str = str.replace("Real-time", "Real-Time")
+    if "Cvsports" in str: 
+        str = str.replace("Cvsports", "CVsports")
+    if "-computer" in str: 
+        str = str.replace("-computer", "-Comput.")
+    if "Networks," in str: 
+        str = str.replace("Networks,", "Networks")
+    if "Networks." in str: 
+        str = str.replace("Networks.", "Networks")
+    if "Music." in str: 
+        str = str.replace("Music.", "Music")
+    if "Music." in str: 
+        str = str.replace("Music.", "Music")
+    if "Control." in str: 
+        str = str.replace("Control.", "Control")
+    if "Uavision" in str: 
+        str = str.replace("Uavision", "UAVision")
+    if "V Work." in str: 
+        str = str.replace("V Work.", "V Work.)")
+    if "P Work." in str: 
+        str = str.replace("P Work.", "P Work.)")
+    if "Ustralasian" in str: 
+        str = str.replace("Ustralasian", "Australasian")
+    if "mmsports" in str: 
+        str = str.replace("mmsports", "MMSports")
+    if "neurips" in str: 
+        str = str.replace("neurips", "NeurIPS")
+    if "" in str: 
+        str = str.replace("", "")
+
+    return str
+
+def abbreviate(s, data):
+    """
+    This function takes a string s as input, applies some transformation to it,
+    and returns the transformed string.
+    """
+    jabbr = journal_abbrev(s, data)
+    return(jabbr)
+
+def process_file(input_file):
+    """
+    This function reads lines from the input file and processes them according
+    to the specification. It writes the processed lines to an output file.
+    """
+    # Extract the file name prefix from the input file name
+    prefix = input_file[:-4]
+
+    # Open the input file for reading
+    with open(input_file, 'r') as f:
+        # Open the output file for writing
+        with open(f"{prefix}-short.bib", 'w') as out:
+            # Open the list with abbreviations
+            data = load_abbrev("abbrev.txt.gz")
+
+            # Print a header
+            current_time = datetime.datetime.now()
+            formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+            out.write("File generated by bibstring on " + formatted_time + "\n")
+            # Read each line from the input file
+            for line in f:
+                # Check if the line contains a string definition
+                if ( ("@STRING{" in line) or ("@string{" in line) ) and ("#" not in line):
+                    # Extract the string from the line using regex
+                    match = re.search(r'"(.*?)"', line)
+                    if match:
+                        # Apply some transformation to the string
+                        string = abbreviate(match.group(1), data)
+                        # Replace the original string with the transformed one
+                        line = line.replace(match.group(1), string)
+                # Write the processed line to the output file
+                out.write(line)
+
+def main():
+    # Set up the argument parser
+    parser = argparse.ArgumentParser(description="Process the input.bib file to change all @STRING macros by an abbreviated string. \nOutput file is input-short.bib")
+    parser.add_argument("input", metavar="input.bib", type=str, help="BiBTeX file input.bib to be parsed")
+    parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+    args = parser.parse_args()
+
+    # Call the greet function with the name
+    if args.input:
+        # Check if the file name matches the pattern "?*.bib"
+        if not re.match(r".+\.bib$", args.input):
+            print("Error: The input file must have a .bib extension.")
+            return
+        # Call the apply function with the file name
+        if args.verbose:
+            print("Starting processing...")
+        process_file(args.input)
+        if args.verbose:
+            print("Processing complete.")
+    else:
+        parser.print_help()
+
+
+if __name__ == "__main__":
+    main()
+
