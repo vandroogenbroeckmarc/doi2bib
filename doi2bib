@@ -311,7 +311,7 @@ def handle_bioRxiv(entry):
     printDEBUG(1, "bioRxiv entry")
     entry['ID'] = entry['ID'] + "-bioRxiv"
     entry['ENTRYTYPE'] = "article"
-    entry['journal'] = "bioRxiv"
+    entry['journal'] = "biorxiv"
     entry['keywords'] = ''
     entry['eprinttype'] = "bioRxiv"
     return entry
