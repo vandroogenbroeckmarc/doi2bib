@@ -474,8 +474,12 @@ def get_entry(doi):
             print(entry)
         else: 
             oldkey = str(entry['ID'])
+            # Some title cleaning
             entry['title'] = entry['title'].replace("\{",'')
             entry['title'] = entry['title'].replace("\}",'')
+            entry['title'] = entry['title'].replace("\\textendash ",'-')
+            entry['title'] = entry['title'].replace("\\textendash",'-')
+
             newKey = entry['author'].split(",")[0] + entry['year'] + entry['title'].split()[0]
 
             # Check to see if the key is not too short
