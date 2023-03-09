@@ -479,6 +479,7 @@ def get_entry(doi):
             entry['title'] = entry['title'].replace("\}",'')
             entry['title'] = entry['title'].replace("\\textendash ",'-')
             entry['title'] = entry['title'].replace("\\textendash",'-')
+            entry['title'] = entry['title'].replace('&amp;','&')  # see 10.1109/access.2021.3108565
 
             newKey = entry['author'].split(",")[0] + entry['year'] + entry['title'].split()[0]
 
