@@ -314,6 +314,7 @@ def handle_bioRxiv(entry):
     entry['journal'] = "biorxiv"
     entry['keywords'] = ''
     entry['eprinttype'] = "bioRxiv"
+    entry['publisher'] = "Cold Spring Harbor Laboratory"
     return entry
 
 def handle_PsyArXiv(entry):
