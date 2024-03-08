@@ -109,7 +109,7 @@ IGNORELIST = [
     "ab", "um"
 ]
 
-MONTH_RE = re.compile("\s*month\s*=\s*\{\s*?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*\},?")
+# MONTH_RE = re.compile("\s*month\s*=\s*\{\s*?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*\},?")
 LATEST_ISSN = "http://www.issn.org/wp-content/uploads/2013/09/LTWA_20160915.txt"
 ISSN_UPD = datetime.date(2016, 9, 15)
 
@@ -327,12 +327,21 @@ def handle_PsyArXiv(entry):
     return entry
 
 def handle_PREPRINT(entry):
-    printDEBUG(1, "Preprint entry")
+    printDEBUG(1, "PREPRINT entry")
     entry['ID'] = entry['ID'] + "-preprint"
     entry['ENTRYTYPE'] = "article"
     entry['journal'] = "PREPRINT"
     entry['keywords'] = ''
     entry['eprinttype'] = "PREPRINT"
+    return entry
+
+def handle_preprintMDPI(entry):
+    printDEBUG(1, "Preprint entry")
+    entry['ID'] = entry['ID'] + "-preprint"
+    entry['ENTRYTYPE'] = "article"
+    entry['journal'] = "Preprint"
+    entry['keywords'] = ''
+    entry['eprinttype'] = "Preprint"
     return entry
 
 def handle_PsyArXiv(entry):
@@ -388,6 +397,9 @@ def handle_ACM(entry):
 # -------------------------------------------------------------------------
 # The main function
 def get_entry(doi):
+    # Put a checkpoint
+    get_linenumber() 
+
     url = f"https://doi.org/{doi}"
     printDEBUG(1, "Fetching " + url)
 
@@ -410,6 +422,13 @@ def get_entry(doi):
         content = raw.content.decode('utf-8')
         if doi.find("10.48550/") > -1:  # Problem with some ID fields with arXiv
             content = re.sub("{(.*), title", "{IDToBeReplaced, title", content)
+
+        # Sometimes keys contain spaces (see 10.58119/ULG/H5SP5P ) ...
+        # Still need some code to handle that
+
+	# Some references encode month if the form of "month=sep" instead of "month={sep}" // See 10.1109/ICRCV59470.2023.10329030
+        content = re.sub("month=([a-z]+)", "month={\\1}", content)
+
         db = bibtexparser.loads(content, parser=parser)
         if len(db.entries) >= 1: 
             entry = db.entries[0]
@@ -781,6 +800,10 @@ def get_entry(doi):
         if entry['doi'].find("10.21203/") > -1:  # Research Square
             entry = handle_PREPRINT(entry)
 
+        # Check for a Research Square preprint document 
+        if entry['doi'].find("10.20944/") > -1:  # Research Square
+            entry = handle_preprintMDPI(entry)
+
         # Check for a TechRxiv document
         if entry['doi'].find("10.36227/") > -1:  # TechRxiv
             entry = handle_TechRxiv(entry)
@@ -1003,6 +1026,10 @@ if __name__ == "__main__":
             print("Verbositiy increased")
         doi = args.doi
         # doi = sys.argv[1]
+
+        # Put a checkpoint
+        get_linenumber() 
+
         data = get_entry(doi)
         print("\n" + data)
 
