@@ -344,7 +344,7 @@ def handle_preprintMDPI(entry):
     entry['eprinttype'] = "Preprint"
     return entry
 
-def handle_PsyArXiv(entry):
+def handle_TechRxiv(entry):
     printDEBUG(1, "TechRxiv entry")
     entry['ENTRYTYPE'] = "article"
     entry['ID'] = entry['ID'] + "-techrxiv"
