@@ -5,7 +5,8 @@
 
 % Preprints 
 % arXiv ( 10.48550 )
-@STRING{arxiv = "CoRR"}
+% @STRING{arxiv = "CoRR"} - this should be like this, but in practice most people write arXiv instead
+@STRING{arxiv = "arXiv"}
 % Cold Spring Harbor Laboratory ( 10.1101 )
 @STRING{biorxiv = "bioRxiv"}
 @STRING{medxriv = "medRxiv"}
@@ -23,17 +24,42 @@
 @STRING{publisher-aas = "American Astronomical Society"}
 @STRING{aj = "The Astronomical Journal"}
 
-% SSRN ( 10.2139 )
-@STRING{ssrn = "Social Science Research Network"}
+% Cambridge University Press ( 10.1017 )
+@STRING{publisher-cup = "Cambridge University Press (CUP)"}
+@STRING{cup-j-lme = "Journal of Law, Medicine \& Ethics"}
 
 % European Open Science Publishing ( 10.24018 )
 @STRING{ejeeces = "European Journal of Electrical Engineering and Computer Science"}
+
+% Informa UK Limited ( 10.1080 ) / Taylor & Francis [now] ( 10.2307 )
+@STRING{taylor-j-jcd = "Journal of Control and Decision"}
+@STRING{taylor-j-tas = "The American Statistician"}
+
+% Oxford University Press (OUP) ( 10.1111 )
+@STRING{publisher-oup = "Oxford University Press (OUP)"}
+@STRING{oxford-hcr = "Human Communication Researchr"}
+@STRING{oxford-poq = "Public Opinion Quarterly"}
+
+% Society of Visual Informatics ( 10.62527 )
+@STRING{publisher-svi = "Society of Visual Informatics"}
+@STRING{svi-joiv = "International Journal on Informatics Visualization (JOIV)"}
+
+% SSRN ( 10.2139 )
+@STRING{ssrn = "Social Science Research Network"}
+
+% ----------------------------------------------------
+% Society for Industrial and Applied Mathematics (SIAM) ( 10.1137 )
+@STRING{publisher-siam = "Society for Industrial \& Applied Mathematics (SIAM)"}
+% Journals
+@STRING{siam-j-is = "SIAM Journal on Imaging Sciences"}
 
 % ----------------------------------------------------
 % ACM ( 10.1145 )
 % Journals
 @STRING{acm-cs = "ACM Computing Surveys"}
 @STRING{acm-cacm = "Communications of the ACM"}
+@STRING{acm-thri = "ACM Transactions on Human-Robot Interaction"}
+@STRING{acm-tist = "ACM Transactions on Intelligent Systems and Technology"}
 @STRING{acm-tmcca = "ACM Transactions on Multimedia Computing, Communications, and Applications"}
 @STRING{acm-tog = "ACM Transactions on Graphics"}
 @STRING{acm-tois = "ACM Transactions on Information Systems"}
@@ -46,7 +72,10 @@
 @STRING{acm-c-m = "ACM International Conference on Multimedia"}
 @STRING{acm-c-kdd = "ACM SIGKDD International Conference on Knowledge discovery and data mining (KDD)"}
 @STRING{acm-c-chfcs= "Proceedings of the CHI Conference on Human Factors in Computing Systems"}
+@STRING{acm-c-icii = "International Conference on Intelligent User Interfaces"}
+@STRING{acm-c-icme = "ACM International Conference on Interactive Media Experiences"}
 @STRING{acm-c-maed = "ACM International Workshop on Multimedia Analysis for Ecological Data (MAED)"}
+@STRING{acm-c-maw = "ACM Multimedia Asia Workshops"}
 @STRING{acm-c-mmsports = "International ACM Workshop on Multimedia Content Analysis in Sports (MMSports)"}
 @STRING{acm-c-msys = "ACM Multimedia Systems Conference"}
 @STRING{acm-c-msysp = "Proceedings of the ACM Multimedia Systems Conference"}
@@ -61,7 +90,6 @@
 @STRING{siggraph = "ACM International Conference on Computer Graphics and Interactive Techniques (SIGGRAPH)"}
 @STRING{sigir = "ACM International Conference on Research and Development in Information Retrieval (SIGIR)"}
 @STRING{maed = "ACM International Workshop on Multimedia Analysis for Ecological Data (MAED)"}
-@STRING{mmsports = "International ACM Workshop on Multimedia Content Analysis in Sports (MMSports)"}
 @STRING{mmsys = "ACM Multimedia Systems Conference"}
 @STRING{vssn = "ACM international workshop on video surveillance \& sensor networks (VSSN)"}
 
@@ -83,19 +111,23 @@
 @STRING{ieee-aslp = "IEEE Transactions on Audio, Speech and Language Processing"}
 @STRING{ieee-bhi = "IEEE Journal of Biomedical and Health Informatics"}
 @STRING{ieee-cst = "IEEE Communications Surveys \& Tutorials"}
+@STRING{ieee-cga = "IEEE Computer Graphics and Applications"}
+@STRING{ieee-dd = "IEEE Data Descriptions"}
 @STRING{ieee-grsl = "IEEE Geoscience and Remote Sensing Letters"}
 @STRING{ieee-qe = "IEEE Journal of Quantum Electronics"}
 @STRING{ieee-is = "IEEE Intelligent Systems"}
 @STRING{ieee-it = "IEEE Transactions on Information Theory"}
 @STRING{ieee-itsm = "IEEE Intelligent Transportation Systems Magazine"}
 @STRING{ieee-ojits = "IEEE Open Journal of Intelligent Transportation Systems"}
-@STRING{ieee-pieee = "Proceedings of IEEE"}
+@STRING{ieee-pieee = "Proceedings of the IEEE"}
 @STRING{ieee-ral = "IEEE Robotics and Automation Letters"}
 @STRING{ieee-sac = "IEEE Journal on Selected Areas in Communications"}
 @STRING{ieee-sj = "IEEE Sensors Journal"}
 @STRING{ieee-spl = "IEEE Signal Processing Letters"}
 @STRING{ieee-spm = "IEEE Signal Processing Magazine"}
+@STRING{ieee-staeors = "IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing"}
 @STRING{ieee-stsp = "IEEE Journal of Selected Topics in Signal Processing"}
+@STRING{ieee-tai = "IEEE Transactions on Artificial Intelligence"}
 @STRING{ieee-tase = "IEEE Transactions on Automation Science and Engineering"}
 @STRING{ieee-tassp = "IEEE Transactions on Acoustics, Speech and Signal Processing"}
 @STRING{ieee-tb = "IEEE Transactions on Broadcasting"}
@@ -123,6 +155,7 @@
 @STRING{ieee-tkde = "IEEE Transactions on Knowledge And Data Engineering"}
 @STRING{ieee-tm = "IEEE Transactions on Multimedia"}
 @STRING{ieee-tmi = "IEEE Transactions on Medical Imaging"}
+@STRING{ieee-tmrb = "IEEE Transactions on Medical Robotics and Bionics"}
 @STRING{ieee-tnn = "IEEE Transactions on Neural Networks"}
 @STRING{ieee-tnnls = "IEEE Transactions on Neural Networks and Learning Systems"}
 @STRING{ieee-tpami = "IEEE Transactions on Pattern Analysis and Machine Intelligence"}
@@ -137,8 +170,10 @@
 @STRING{ieee-tsmcs = "IEEE Transactions on Systems, Man, and Cybernetics: Systems"}
 @STRING{ieee-tsc = "IEEE Transactions on Signal Processing"}
 @STRING{ieee-tsp = "IEEE Transactions on Sustainable Computing"}
+@STRING{ieee-tvsg = "IEEE Transactions on Visualization and Computer Graphics"}
 @STRING{ieee-tvt = "IEEE Transactions on Vehicular Technology"}
 @STRING{ieee-twc = "IEEE Transactions on Wireless Communications"}
+@STRING{ieee-wc = "IEEE Wireless Communications"}
 % OLD ENTTRIES
 @STRING{aslp = "IEEE Transactions on Audio, Speech and Language Processing"}
 @STRING{asp = "IEEE Transactions on Signal Processing"}
@@ -198,6 +233,8 @@
 @STRING{ieee-c-avss = "IEEE International Conference on Advanced Video and Signal Based Surveillance (AVSS)"}
 @STRING{ieee-c-bsn = "IEEE International Conference on Wearable and Implantable Body Sensor Networks (BSN)"}
 @STRING{ieee-c-btas = "IEEE International Conference on Biometrics: Theory, Applications and Systems (BTAS)"}
+@STRING{ieee-c-cai = "IEEE Conference on Artificial Intelligence (CAI)"}
+@STRING{ieee-c-cec = "IEEE Congress on Evolutionary Computation (CEC)"}
 @STRING{ieee-c-cvpr = "IEEE Conference on Computer Vision and Pattern Recognition (CVPR)"}
 @STRING{ieee-c-cvsports = "IEEE International Conference on Computer Vision and Pattern Recognition Workshops (CVPRW), CVsports"}
 @STRING{ieee-c-cvsportsx = "IEEE/CVF International Conference on Computer Vision and Pattern Recognition Workshops (CVPRW), CVsports"}
@@ -236,7 +273,11 @@
 @STRING{ieee-c-icvprx = "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)"}
 @STRING{ieee-c-icvprw = "IEEE International Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)"}
 @STRING{ieee-c-icvprwx = "IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)"}
+@STRING{ieee-c-iecon = "Annual Conference of the IEEE Industrial Electronics Society (IECON)"}
+@STRING{ieee-c-ijcnn = "International Joint Conference on Neural Networks (IJCNN)"}
+@STRING{ieee-c-imcec = "IEEE Advanced Information Management, Communicates, Electronic and Automation Control Conference (IMCEC)"}
 @STRING{ieee-c-infocom = "IEEE International Conference on Computer Communications"}
+@STRING{ieee-c-ipec = "IEEE Asia-Pacific Conference on Image Processing, Electronics and Computers (IPEC)"}
 @STRING{ieee-c-iros = "IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)"}
 @STRING{ieee-c-ist = "IEEE International Conference on Imaging Systems and Techniques (IST)"}
 @STRING{ieee-c-itaic = "IEEE Joint International Information Technology and Artificial Intelligence Conference (ITAIC)"}
@@ -251,6 +292,7 @@
 @STRING{ieee-c-uavision = "IEEE International Conference on Computer Vision and Pattern Recognition Workshops (CVPRW), UAVision"}
 @STRING{ieee-c-vcip = "IEEE International Conference on Visual Communications and Image Processing (VCIP)"}
 @STRING{ieee-c-vecims = "IEEE International Conference on Virtual Environments, Human-Computer Interfaces, and Measurement Systems (VECIMS)"}
+@STRING{ieee-c-wacv-original = "IEEE Workshop on the Applications of Computer Vision (WACV)"}
 @STRING{ieee-c-wacv = "IEEE Winter Conference on Applications of Computer Vision (WACV)"}
 @STRING{ieee-c-wacvx = "IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)"}
 @STRING{ieee-c-wacvw = "IEEE Winter Conference on Applications of Computer Vision Workshops (WACVW)"}
@@ -263,7 +305,10 @@
 @STRING{ieee-w-msp = "IEEE Workshop on Multimedia Signal Processing"}
 @STRING{ieee-w-pets = "IEEE International Workshop on Performance Evaluation of Tracking and Surveillance (PETS)"}
 @STRING{ieee-w-smbv = "IEEE Workshop on Stereo and Multi-Baseline Vision (SMBV)"}
+@STRING{ieee-w-star = "IEEE International Workshop on Sport Technology and Research (STAR)"}
+
 % Conferences/Workshops edited by the IEEE that do not contian IEEE in their name
+@STRING{ieee-csip = "International Conference on Computer Science and Information Processing (CSIP)"}
 @STRING{ieee-ecai = "International Conference on Electronics, Computers and Artificial Intelligence (ECAI)"}
 @STRING{ieee-icsip = "International Conference on Signal and Image Processing (ICSIP)"}
 @STRING{ieee-isctis = "International Symposium on Computer Technology and Information Science (ISCTIS)"}
@@ -344,16 +389,26 @@
 % ----------------------------------------------------
 % springer ( 10.1007 )
 % Journals
+@STRING{springer-j-air = "Artificial Intelligence Review"}
 @STRING{springer-ijmir = "International Journal of Multimedia Information Retrieval"}
-% OLD ENTRIES
+@STRING{springer-j-mp = "Mathematical Programming"}
+@STRING{springer-j-npl = "Neural Processing Letters"}
+@STRING{springer-j-spe = "Sports Engineering"}
+@STRING{springer-j-vc = "The Visual Computer"}
 % Conferences
 @STRING{springer-c-icaus = "International Conference on Autonomous Unmanned Systems"}
-% OLD ENTRIES
+@STRING{springer-c-isace = "International Sports Analytics Conference and Exhibition"}
+@STRING{springer-c-micai = "International Conference on Medical Image Computing and Computer-Assisted Intervention"}
 
 % ----------------------------------------------------
 % elsevier ( 10.1016 )
 % Journals
 @STRING{elsevier-cea = "Computers and Electronics in Agriculture"}
+@STRING{elsevier-j-displays = "Displays"}
+@STRING{elsevier-j-eaai = "Engineering Applications of Artificial Intelligence"}
+@STRING{elsevier-j-mia = "Medical Image Analysis"}
+@STRING{elsevier-j-trpf = "Transportation Research Part F: Traffic Psychology and Behaviour"}
+@STRING{elsevier-j-vrih = "Virtual Reality \& Intelligent Hardware (VRIH)"}
 @STRING{elsevier-mla = "Machine Learning with Applications"}
 % OLD ENTRIES
 % Conferences
@@ -367,10 +422,35 @@
 % OLD ENTRIES
 
 % ----------------------------------------------------
+% j-stage ( 10.10.3169 )
+% Journals
+@STRING{jstage-j-itetmta = "ITE Transactions on Media Technology and Applications"}
+% Conferences
+
+% ----------------------------------------------------
+% SciTePress ( 10.5220/0010770600003124 )
+% Journals
+% Conferences
+@STRING{scitepress-ijccv = "International Joint Conference on Computer Vision, Imaging and Computer Graphics Theory and Applications" }
+
+% ----------------------------------------------------
+% Public Library of Science (PLoS) ( 10.1371 )
+% Journals
+@STRING{plos-plosone = "PLOS ONE"}
+% Conferences
+
+% ----------------------------------------------------
+% Annual Reviews ( 10.1146 )
+@STRING{publisher-ar = "Annual Reviews"}
+% Journals
+@STRING{ar-j-isa = "Annual Review of Statistics and Its Application"}
+
+% ----------------------------------------------------
 % spie ( 10.1117 )
 % Journals
 % OLD ENTRIES
 % Conferences
+@STRING{spie-c-srmam = "Storage and Retrieval Methods and Applications for Multimedia"}
 % OLD ENTRIES
 
 % ----------------------------------------------------
@@ -411,6 +491,7 @@
 % ----------------------------------------------------
 % sage ( 10.1177 )
 % Journals
+@STRING{sage-j-trr-jtrb = "Transportation Research Record: Journal of the Transportation Research Board"}
 % OLD ENTRIES
 % Conferences
 % OLD ENTRIES
@@ -526,6 +607,7 @@
 @STRING{jei = "Journal of Electronic Imaging"}
 @STRING{jhp = "Journal of Health Psychology"}
 @STRING{j-INT-J-IMAGE-GRAPHICS = "International Journal of Image and Graphics"}
+@STRING{jig = "Journal of Image and Graphics"}
 @STRING{jmiv = "Journal of Mathematical Imaging and Vision"}
 @STRING{jmicro = "Journal of Microscopy"}
 @STRING{jmlr = "Journal of Machine Learning Research"}
@@ -593,7 +675,9 @@
 @STRING{ccis   = "Communications in Computer and Information Science"}
 @STRING{ecpsci = "Engineering Cyber-Physical Systems and Critical Infrastructures"}
 @STRING{civ    = "Computational Imaging and Vision"}
+@STRING{crl    = "Coastal Research Library"}
 @STRING{jpcs   = "Journal of Physics: Conference Series"}
+@STRING{lais   = "Learning and Analytics in Intelligent Systems"}
 @STRING{lncs   = "Lecture Notes in Computer Science"}
 @STRING{lncvb  = "Lecture Notes in Computational Vision and Biomechanics"}
 @STRING{lndect = "Lecture Notes on Data Engineering and Communications Technologies"}
@@ -610,6 +694,9 @@
 
 % ----------------------------------------------------
 % Other Conferences
+@STRING{c-yac = "Youth Academic Annual Conference of Chinese Association of Automation (YAC)"}
+
+% Conferences whose name does not start with "c-"
 @STRING{aaai = "AAAI Conference on Artificial Intelligence"}
 @STRING{accv = "Asian Conference on Computer Vision (ACCV)"}
 @STRING{accvw = "Asian Conference on Computer Vision Workshops (ACCV Workshops)"}
@@ -675,6 +762,7 @@
 @STRING{mmsp = "International Workshop on Multimedia Signal Processing (MMSP)"}
 @STRING{mvip = "International Conference on Machine Vision and Image Processing (MVIP)"}
 @STRING{nips = "Advances in Neural Information Processing Systems (NeurIPS)"}
+@STRING{nipsw = "Advances in Neural Information Processing Systems (NeurIPS) Workshop"}
 @STRING{pmlr = "Proceedings of Machine Learning Research"}
 @STRING{prai = "International Conference on Pattern Recognition and Artificial Intelligence (PRAI)"}
 @STRING{pspie = "Proceedings of SPIE"}
@@ -691,6 +779,7 @@
 % Editors / publishers
 % ----------------------------------------------------
 @STRING{publisher-academic = "Academic Press"}
+@STRING{publisher-acl = "Association for Computational Linguistics"}
 @STRING{publisher-acm = "ACM Press"}
 @STRING{publisher-acmlong = "Association for Computing Machinery"}
 @STRING{publisher-addison = "Addison-Wesley"}
@@ -722,8 +811,10 @@
 @STRING{publisher-now = "Now Publishers"}
 @STRING{publisher-oreilly = "O'Reilly \& Associates"}
 @STRING{publisher-peregrinus = "Peter Peregrinus Ltd."}
+@STRING{publisher-plos = "Public Library of Science (PLoS)"}
 @STRING{publisher-prentice = "Prentice Hall"}
 @STRING{publisher-sage = "SAGE Publications"}
+@STRING{publisher-spie = "SPIE"}
 @STRING{publisher-springer = "Springer"}
 @STRING{publisher-springerbh = "Springer Berlin Heidelberg"}
 @STRING{publisher-springerip = "Springer International Publishing"}
@@ -788,12 +879,16 @@
 % Related to specific countries, cities, etc.
 % ----------------------------------------------------
 % Administrations
+@STRING{administration-itu = "International Telecommunication Union"}
 @STRING{administration-nhtsa = "National Highway Traffic Safety Administration"}
 @STRING{administration-nhtsa-abb = "NHTSA"} #
 @STRING{administration-paho = "Pan American Health Organization"}
 @STRING{administration-paho-abb = "PAHO"} #
 @STRING{administration-who = "World Health Organization"}
 @STRING{administration-who-abb = "WHO"}
+
+% Institutes
+@STRING{institute-iiite = "Institute of Image Information and Television Engineers"}
 
 % Laboratories
 @STRING{laboratory-cmm = "Centre de morphologie math\'ematique"} #
@@ -805,6 +900,7 @@
 
 % Universities
 @STRING{university-kth = "KTH Royal Institute of Technology, Sweden"}
+@STRING{university-leiden = "Universiteit Leiden, The Netherlands"}
 @STRING{university-ucl = "Universit\'e catholique de Louvain"} #
 @STRING{university-uclanglais = "Catholic University of Louvain"}
 @STRING{university-ulg = "University of Li\`ege, Belgium"} #
@@ -829,19 +925,25 @@
 % Cities
 @STRING{city-anchorage = "Anchorage, Alaska, USA"}
 @STRING{city-boston = "Boston, Massachusetts, USA"}
+@STRING{city-brussels = "Brussels, Belgiuim"}
+@STRING{city-cambridge = "Cambridge, Massachusetts, USA"}
 @STRING{city-chicago = "Chicago, Illinois, USA"}
 @STRING{city-columbus = "Columbus, Ohio, USA"}
 @STRING{city-dallas = "Dallas, Texas, USA"}
+@STRING{city-greenville = "Greenville, South Carolina, USA"}
 @STRING{city-honolulu = "Honolulu, Hawaii, USA"}
 @STRING{city-lasvegas = "Las Vegas, Nevada, USA"}
+@STRING{city-lecco = "Lecco, Italy"}
 @STRING{city-lisbon = "Lisbon, Portugal"}
 @STRING{city-london = "London, England"}
 @STRING{city-longbeach = "Long Beach, California, USA"}
 @STRING{city-losangeles = "Los Angeles, California, USA"}
+@STRING{city-melbourne = "Melbourne, Victoria, Australia"}
 @STRING{city-miami = "Miami, Florida, USA"}
 @STRING{city-minneapolis = "Minneapolis, Minnesota, USA"}
 @STRING{city-mountainview = "Mountain View, California, USA"}
 @STRING{city-montreal = "Montr{\'e}al, Canada"}
+@STRING{city-niagarafalls = "Niagara Falls, Ontario, Canada"},
 @STRING{city-nashville = "Nashville, Tennessee, USA"}
 @STRING{city-neworleans = "New Orleans, Louisiana, USA"}
 @STRING{city-newyork = "New York City, New York, USA"}
@@ -857,6 +959,7 @@
 @STRING{city-seattle = "Seattle, Washington, USA"}
 @STRING{city-seoul = "Seoul, South Korea"}
 @STRING{city-snowmass = "Snowmass, Colorado, USA"}
+@STRING{city-stanford = "Stanford, California, USA"}
 @STRING{city-sydney = "Sydney, NSW, Australia"}
 @STRING{city-telaviv = "Tel Aviv, Isra{\"e}l"}
 @STRING{city-toronto = "Toronto, Ontario, Canada"}
