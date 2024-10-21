@@ -127,8 +127,9 @@ Finally, so useful doi or url fields are useful but not provided by scholar.
 
 (2) Handling macro strings is not done by "commercial" BiBTeX generators. However, macros help guaranteeing some consistency between references and also allow to replace “long” versions of strings (like "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)") by their shorter versions ("IEEE/CVF Conf. Comput. Vis. and Pattern Recogn. (CVPR)”). 
 
-### Future plans
+### Current version and future plans
 
+The version of October 2024 fixes some bugs and extends some functionalities. 
 Obviously, the main plan is to allow a kind-of _pip3 install this_package_. Unfortunately, the doi2bib is already used by another package. So, I still need to find a workaround. I will, so stay tuned.
 
 ## Use at your own risks... 
