@@ -47,7 +47,7 @@ switcher = {
 acronyms = ['IoT']
 cities = ['Brussels', 'Oxford']
 countries  = ['American', 'Belgium', 'China', 'Chinese', 'Europe', 'France', 'United States']
-names = ['Bernoulli', 'Carlo', 'Gaussian', 'Haar', 'Fourier', 'Gemini', 'Hough', 'Laplace', 'Laplacian', 'Markov', 'Minkowski', 'Monte', 'Shannon', 'Viterbi']
+names = ['Bernoulli', 'Carlo', 'Fourier', 'Gaussian', 'Gemini', 'Haar', 'Hough', 'Laplace', 'Laplacian', 'Markov', 'Minkowski', 'Monte', 'Shannon', 'Viterbi']
 multid = ['2D', '2-D', '2D/3D', '3D', '3-D']
 algorithm = ['Vibe', 'ITS', 'Yolo']
 keysTitle = ['A', 'The', 'In', 'From']
@@ -513,6 +513,7 @@ def get_entry(doi):
             entry['title'] = entry['title'].replace("\\textendash ",'-')
             entry['title'] = entry['title'].replace("\\textendash",'-')
             entry['title'] = entry['title'].replace("\\textemdash",' --- ')
+            entry['title'] = entry['title'].replace("\\textdollar",'$')
             entry['title'] = entry['title'].replace('&amp;','&')  # see 10.1109/access.2021.3108565
             entry['title'] = entry['title'].replace("  ",' ')
 
@@ -533,12 +534,15 @@ def get_entry(doi):
             newKey = newKey.replace('-','')
             newKey = newKey.replace('’','')
             newKey = newKey.replace('\'','')
+            newKey = newKey.replace("{\\a}",'a')
+            newKey = newKey.replace("{\\`a}",'a')
+            newKey = newKey.replace("{\\aa}",'a')
+            newKey = newKey.replace("{\\c}",'c')
+            newKey = newKey.replace("{\\e}",'e')
             newKey = newKey.replace("{\\'e}",'e')
             newKey = newKey.replace("{\\`e}",'e')
-            newKey = newKey.replace("{\\`a}",'a')
-            newKey = newKey.replace("{\\c}",'c')
-            newKey = newKey.replace("{\\a}",'a')
-            newKey = newKey.replace("{\\e}",'e')
+            newKey = newKey.replace('{\\"u}','u')
+            newKey = newKey.replace('{\\"o}','o')
             # firstline = firstline.replace(oldkey, newKey) 
             # content = content + [firstline]
             printDEBUG(1, "Replacing ID key " + oldkey + " by " + newKey)
@@ -652,7 +656,7 @@ def get_entry(doi):
         # Check if it is not a Springer LNCS/LNCS/AISC, etc. series
         if ('journal' in entry.keys()) and (entry['doi'].find("10.1007/") > -1) :
 
-            printDEBUG(1, "Springer editor: check if this article is within a series")
+            printDEBUG(1, "\nSpringer editor: check if this article is within a series\n")
             printDEBUG(1, entry)
             
             # Some hooks for detecting a series (because Springer's encoding is so poor...)
@@ -1044,6 +1048,9 @@ def get_entry(doi):
         # Dedicated editing
         bibtex_str = bibtex_str.replace('{IEEE}', "ieee") 
 
+	# Remove the last \n character
+        bibtex_str = bibtex_str[:-1]
+
         return bibtex_str
         # return "\n".join(lines)
     else:
@@ -1069,7 +1076,7 @@ if __name__ == "__main__":
         get_linenumber() 
 
         data = get_entry(doi)
-        print("\n" + data)
+        print(data)
 
     except IndexError as ie:
         # print("Usage: %s DOI" % os.path.basename(sys.argv[0]), file=sys.stderr)
