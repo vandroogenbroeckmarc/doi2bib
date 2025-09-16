@@ -1,62 +1,44 @@
-
 % ----------------------------------------------------
-% Editors with a DOI
+% Editors of preprints
 % ----------------------------------------------------
 
-% Preprints 
 % arXiv ( 10.48550 )
 % @STRING{arxiv = "CoRR"} - this should be like this, but in practice most people write arXiv instead
 @STRING{arxiv = "arXiv"}
+
 % Cold Spring Harbor Laboratory ( 10.1101 )
 @STRING{biorxiv = "bioRxiv"}
 @STRING{medxriv = "medRxiv"}
+
 % techrXiv ( 10.36227 )
 @STRING{techrxiv = "TechRxiv"}
 
-% Single journal editors
-% Academy and Industry Research Collaboration Center (AIRCC) ( 10.5121 )
-@STRING{p-aircc = "Acad. Ind. Res. Collab. Cent. (AIRCC)"}
-@STRING{aircc-j-ijdmkmp = "Int. J. Data Min. \& Knowl. Manag. Process."}
-% Advances in Artificial Intelligence and Machine Learning ( 10.54364 )
-@STRING{aaiml = "Adv. Artif. Intell. Mach. Learn."}
-% jprr ( 10.13176 )
-@STRING{jprr = "J. Pattern Recognit. Res."}
-% BMJ ( 10.1136 )
-@STRING{p-bmj = "Br. Medical J."}
+% ----------------------------------------------------
+% Editors with few journals/conferences
+% ----------------------------------------------------
+
 % 10.1186
 @STRING{bmc-gen = "BMC Genom."}
+@STRING{j-biomin = "Biodata Min."}
 
-% Human Kinetics ( 10.1123 )
-@STRING{p-humankinetics = "Hum. Kinet."}
-@STRING{humankinetics-ijspp = "Int. J. Sports Physiol. Perform."}
+% AHFE International ( 10.54941 )
+@STRING{p-ahfe = "AHFE Int."}
+@STRING{ahfe-hfs = "Hum. Factors Simul."}
+@STRING{ahfe-hft = "Hum. Factors Transp."}
+@STRING{ahfe-ihsi = "Intell. Hum. Syst. Integr. (IHSI): Integrating People Intell. Syst."}
 
-% IET ( 10.1049 )
-@STRING{publisher-iet = "Inst. Eng. Technol. (IET)"}
-@STRING{iet-j-wss = "IET Wirel. Sens. Syst."}
-
-% Internet Society ( 10.14722 )
-@STRING{publisher-isoc = "Internet Soc."}
-@STRING{isoc-s-vehiclesec = "Symp. Veh. Secur. Priv. (vehiclesec)"}
-
-% PiscoMed Publishing Pte Ltd (10.18282 )
-@STRING{p-pisco = "Piscomed Publ. Pte Ltd"}
-@STRING{pisco-j-iss = "Insight - Sports Sci."}
-
-% Society of Automotive Engineers of Japan ( 10.20485 )
-@STRING{p-saej = "Soc. Automot. Eng. Jpn. Inc."}
-@STRING{saej-j-ijae = "Int. J. Automot. Eng."}
-
-% Termedia ( 10.5114 )
-@STRING{p-termedia = "Termedia"}
-@STRING{termedia-j-bs = "Biology Sport"}
-
-@STRING{ieice = "Inst. Electron. Inf. Commun. Eng. (IEICE)"}
-@STRING{ieice-t-is = "IEICE Trans. Inf. Syst."}
-
-% -------------------------------------
-% aas ( 10.3847 )
+% American Astronomical Society ( 10.3847 )
 @STRING{publisher-aas = "Am. Astron. Soc."}
 @STRING{aj = "Astron. J."}
+
+% Annual Reviews ( 10.1146 )
+@STRING{publisher-ar = "Annu. Rev."}
+% Journals
+@STRING{ar-j-isa = "Annu. Rev. Stat. Its Appl."}
+
+% American Chemical Society (ACS) ( 10.1021 )
+@STRING{p-acs = "Am. Chem. Soc. (ACS)"}
+@STRING{acs-j-asms = "J. Am. Soc. Mass Spectrom."}
 
 % American Meteorological Society ( 10.1175 )
 @STRING{publisher-ams = "Am. Meteorol. Soc."}
@@ -64,8 +46,33 @@
 
 % American Psychological Association (APA) ( 10.1037 )
 @STRING{publisher-apa = "Am. Psychol. Assoc. (APA)"}
+@STRING{apa-j-ep = "J. Educ. Psychol."}
 @STRING{apa-j-pb = "Psychol. Bull."}
 @STRING{apa-j-pr = "Psychol. Rev."}
+
+% Association for the Advancement of Artificial Intelligence (AAAI) ( 10.1609 )
+@STRING{p-aaai = "Assoc. Adv. Artif. Intell. (AAAI)"}
+@STRING{aaai-c = "AAAI Conf. Artif. Intell."}
+@STRING{aaai-waict = "AAAI Work. Artif. Intell. Causal Tech."}
+
+% Academy and Industry Research Collaboration Center (AIRCC) ( 10.5121 )
+@STRING{p-aircc = "Acad. Ind. Res. Collab. Cent. (AIRCC)"}
+@STRING{aircc-j-ijdmkmp = "Int. J. Data Min. \& Knowl. Manag. Process."}
+
+% Advances in Artificial Intelligence and Machine Learning ( 10.54364 )
+@STRING{aaiml = "Adv. Artif. Intell. Mach. Learn."}
+
+% AIP ( 10.1063 )
+@STRING{publisher-iop = "IOP Publ."}
+@STRING{aip-cp = "AIP Conf. Proc."}
+@STRING{aip-c-icitamee = "Int. Conf. Inf. Technol. Adv. Mech. Electr. Eng."}
+
+% Allerton Press ( 10.3103 )
+@STRING{publisher-allerton = "Allerton Press"}
+@STRING{allterton-j-oidp = "Optoelectron. Instrum. Data Process."}
+
+% BMJ ( 10.1136 )
+@STRING{p-bmj = "Br. Medical J."}
 
 % Cambridge University Press ( 10.1017 )
 @STRING{publisher-cup = "Camb. Univ. Press (CUP)"}
@@ -73,7 +80,27 @@
 
 % De Gruyter ( 10.1515 )
 @STRING{publisher-degruyter = "De Gruyter"}
+@STRING{degruyter-j-css = "Chin. Semiot. Stud."}
 @STRING{degruyter-series-scc = "Semiot. Commun. Cogn. [SCC]"}
+
+% EDP Sciences ( 10.1051 )
+@STRING{edps-aap = "Astron. \& Astrophys."}
+
+% ELS Publishing Co. Limited ( 10.55092 )
+@STRING{publisher-els = "ELS Publ."}
+@STRING{els-j-a = "Assymetry"}
+@STRING{els-j-aias = "Artif. Intell. Auton. Syst."}
+
+% eurasip ( 10.1155 )
+% Journals
+@STRING{wiley-jece = "J. Electr. Comput. Eng."}
+@STRING{wiley-j-ddns = "Discret. Dyn. Nat. Soc."}
+@STRING{wiley-j-mpe = "Math. Probl. Eng."}
+
+% Eurographics Association ( 10.2312 )
+@STRING{publisher-eurass = "Eurographics Assoc."}
+@STRING{publisher-eurass-address = "Goslar. Ger."}
+@STRING{eurass-s-gp = "Symp. Geom. Process."}
 
 % European Open Science Publishing ( 10.24018 )
 @STRING{ejeeces = "Eur. J. Electr. Eng. Comput. Sci."}
@@ -81,14 +108,57 @@
 % Frontiers Media SA ( 10.3389 ) 
 @STRING{publisher-frontierssa = "Front. Media SA"}
 % Journals
-@STRING{publisher-frontiers-gen = "Front. Genet."}
+@STRING{frontiers-bb = "Front. Bioeng. Biotechnol."}
+@STRING{frontiers-gen = "Front. Genet."}
+@STRING{frontiers-neu = "Front. Neuroergonomics"}
+@STRING{frontiers-psy = "Front. Psychol."}
+@STRING{frontiers-sal = "Front. Sports Act. Living"}
 % Conferences
+
+% Georg Thieme Verlag KG ( 10.1055 ) 
+@STRING{publisher-gtv = "Georg Thieme Verl. KG"}
+@STRING{gtv-j-ijsm = "Int. J. Sports Medicine"}
+
+% Human Kinetics ( 10.1123 )
+@STRING{p-humankinetics = "Hum. Kinet."}
+@STRING{humankinetics-ijspp = "Int. J. Sports Physiol. Perform."}
+
+% IEE ( )
+% Journals
+@STRING{iee-cdt = "IEE Proceedings~E, Comput. Digit. Tech."}
+@STRING{iee-csv = "IEE Proceedings~I, Commun. Speech Vis."}
+@STRING{iee-el = "IEE Electron. Lett."}
+@STRING{iee-rsp = "IEE Proceedings~F, Radar Signal Process."}
+
+% IEICE ( 10.1587 )
+@STRING{ieice = "Inst. Electron. Inf. Commun. Eng. (IEICE)"}
+@STRING{ieice-t-is = "IEICE Trans. Inf. Syst."}
+@STRING{ieice-j-nta = "Nonlinear Theory Its Appl. IEICE"}
+
+% IET ( 10.1049 )
+@STRING{publisher-iet = "Inst. Eng. Technol. (IET)"}
+@STRING{iet-j-wss = "IET Wirel. Sens. Syst."}
+
+% IGI Global Scientific Publishing ( 10.4018 )
+@STRING{publisher-igi = "IGI Glob."} 
+@STRING{publisher-igilong = "IGI Glob. Sci. Publ."} 
+@STRING{igi-j-mcmc = "Int. J. Mob. Comput. Multimedia Commun."}
+
+% Inderscience Publishers ( 10.1504 )
+@STRING{publisher-inderpub = "Inderscience Publ."} 
+@STRING{inderpub-j-ijb = "Int. J. Biom."}
 
 % Informa UK Limited ( 10.1080 ) / Taylor & Francis [now] ( 10.2307 )
 @STRING{publisher-informa = "Inf. UK Ltd."}
-@STRING{informa-j-ties = "Theor. Issues Ergon. Sci."}
+@STRING{informa-j-asp = "J. Am. Stat. Assoc."}
 @STRING{informa-j-ergo = "Ergonomics"}
+@STRING{informa-j-ijhci = "Int. J. Human-Comput. Interact."}
+@STRING{informa-j-ties = "Theor. Issues Ergon. Sci."}
+@STRING{informa-j-tip = "Traffic Inj. Prev."}
+@STRING{taylor-j-ajp = "Am. J. Psychol."}
+@STRING{taylor-j-ijde = "Int. J. Digit. Earth"}
 @STRING{taylor-j-jcd = "J. Control Decis."}
+@STRING{taylor-j-smf = "Sci. Medicine Footb."}
 @STRING{taylor-j-tas = "Am. Stat."}
 
 % Institute of Advanced Engineering and Science ( 10.11591 )
@@ -99,72 +169,168 @@
 @STRING{publisher-ipn = "Inst. Politecnico Nac. De Investig. En Comput."}
 @STRING{ipn-cs = "Comput. Y Sist."}
 
+% Internet Society ( 10.14722 )
+@STRING{publisher-isoc = "Internet Soc."}
+@STRING{isoc-s-vehiclesec = "Symp. Veh. Secur. Priv. (vehiclesec)"}
+
 % The Japanese Society of Physical Fitness and Sports Medicine ( 10.7600 )
 @STRING{p-jspfsm = "Jpn. Soc. Phys. Fit. Sports Medicine"}
 @STRING{jspfsm-j-jpfsm = "J. Phys. Fit. Sports Medicine"}
 
+% jprr ( 10.13176 )
+@STRING{jprr = "J. Pattern Recognit. Res."}
+
+% j-stage ( 10.10.3169 )
+% Journals
+@STRING{jstage-j-itetmta = "ITE Trans. Media Technol. Appl."}
+% Conferences
+
 % MIT Press ( 10.1162 ) 
 @STRING{publisher-mit = "MIT Press"}
 @STRING{mit-nc = "Neural Comput."}
+
+% National Library of Serbia ( 10.10.2298 )
+@STRING{publisher-nls = "National Libr. Serbia"}
+@STRING{nls-j-csis = "Comput. Sci. Inf. Syst."}
+
+% nature ( 10.1038 )
+@STRING{nature-j-nc = "Nat. Commun."}
+@STRING{nature-j-nm = "Nat. Methods"}
+
+% Now Publishers ( 10.1561 )
+@STRING{publisher-now = "Now Publ."}
+@STRING{now-j-ftir = "Found. Trends Inf. Retr."}
 
 % Oxford University Press (OUP) ( 10.1111 )
 @STRING{publisher-oup = "Oxf. Univ. Press (OUP)"}
 @STRING{oxford-hcr = "Hum. Commun. Res."}
 @STRING{oxford-poq = "Public Opin. Q."}
 
-% Society of Visual Informatics ( 10.62527 )
-@STRING{publisher-svi = "Soc. Vis. Informatics"}
-@STRING{svi-joiv = "Int. J. Informatics Vis. (JOIV)"}
+% PiscoMed Publishing Pte Ltd (10.18282 )
+@STRING{p-pisco = "Piscomed Publ. Pte Ltd"}
+@STRING{pisco-j-iss = "Insight - Sports Sci."}
 
-% SSRN ( 10.2139 )
-@STRING{ssrn = "Soc. Sci. Res. Netw."}
+% Public Library of Science (PLoS) ( 10.1371 )
+% Journals
+@STRING{plos-plosone = "PLOS ONE"}
+% Conferences
 
-% WSEAS ( 10.37394 )
-@STRING{wseas-publisher = "World Sci. Eng. Acad. Soc. (WSEAS)"}
-@STRING{wseas-j-tisa = "WSEAS Trans. Inf. Sci. Appl."}
+% sage ( 10.1177 )
+@STRING{publisher-sage = "SAGE Publ."}
+% Journals
+@STRING{sage-j-cdps = "Curr. Dir. Psychol. Sci."}
+@STRING{sage-j-cedm = "J. Cogn. Eng. Decis. Mak."}
+@STRING{sage-j-epm = "Educ. Psychol. Meas."}
+@STRING{sage-j-hf = "Hum. Factors: J. Hum. Factors Ergon. Soc."}
+@STRING{sage-j-pime = "Proc. Inst. Mech. Eng. Part D: J. Automob. Eng."}
+@STRING{sage-j-trr-jtrb = "Transp. Res. Rec.: J. Transp. Res. Board"}
+% Conferences
+@STRING{sage-c-hfesam = "Proc. Hum. Factors Ergon. Soc. Annu. Meet."}
 
-% World Scientific Connecting Great Minds ( 10.1142 ) 
-@STRING{publisher-wsp = "World Sci. Pub Co Pte Ltd"}
-@STRING{wsp-ijhses = "Int. J. High Speed Electron. Syst."}
+% SCIE Publishing ( 10.70322 )
+@STRING{p-scie = "SCIE Publ. Ltd."}
+@STRING{scie-j-dav = "Drones Auton. Veh."}
 
-% ----------------------------------------------------
+% Science Research Society ( 10.52783 )
+@STRING{p-src = "Sci. Res. Soc."}
+@STRING{src-j-isem = "J. Inf. Syst. Eng. Manag."}
+
+% SciTePress ( 10.5220/0010770600003124 )
+% Journals
+% Conferences
+@STRING{scitepress-ijccv = "Int. Jt. Conf. Comput. Vis. Imaging Comput. Graph. Theory Appl." }
+
+% Society of Automotive Engineers of Japan ( 10.20485 )
+@STRING{p-saej = "Soc. Automot. Eng. Jpn. Inc."}
+@STRING{saej-j-ijae = "Int. J. Automot. Eng."}
+
 % Society for Industrial and Applied Mathematics (SIAM) ( 10.1137 )
 @STRING{publisher-siam = "Soc. Ind. \& Appl. Math. (SIAM)"}
 % Journals
 @STRING{siam-j-is = "SIAM J. Imaging Sci."}
 @STRING{siam-j-sc = "SIAM J. Sci. Comput."}
 
+% Society of Visual Informatics ( 10.62527 )
+@STRING{publisher-svi = "Soc. Vis. Informatics"}
+@STRING{svi-joiv = "Int. J. Informatics Vis. (JOIV)"}
+
+% spie ( 10.1117 )
+@STRING{publisher-spie = "SPIE"}
+@STRING{spie = "Soc. Photo-Instrumentation Eng."}
+% Journals
+@STRING{pspie = "Proc. SPIE"}
+% Conferences
+@STRING{spie-c-cisai = "Int. Conf. Comput. Inf. Sci. Artif. Intell. (CISAI)"}
+@STRING{spie-c-srmam = "Storage Retr. Methods Appl. Multimedia"}
+
+% SSRN ( 10.2139 )
+@STRING{ssrn = "Soc. Sci. Res. Netw."}
+
+% Termedia ( 10.5114 )
+@STRING{p-termedia = "Termedia"}
+@STRING{termedia-j-bs = "Biology Sport"}
+
+% The Open Journal ( 10.21105 )
+@STRING{p-toj = "Open J."}
+@STRING{toj-joss = "J. Open Source Softw."}
+
+% Thomson & Ryberg Publications ( 10.62647 )
+@STRING{p-thomson = "Thomson \& Ryberg Publ."}
+@STRING{thomson-j-itce = "Int. J. Inf. Technol. Comput. Eng."}
+
+% publisher-tsp ( 10.32604 )
+@STRING{tsp-iasc = "Intell. Autom. \& Soft Comput."}
+
+% WSEAS ( 10.37394 )
+@STRING{wseas-publisher = "World Sci. Eng. Acad. Soc. (WSEAS)"}
+@STRING{wseas-j-tisa = "WSEAS Trans. Inf. Sci. Appl."}
+
+% World Scientific Connecting Great Minds ( 10.1142 ) 
+@STRING{publisher-ws = "World Sci."}
+@STRING{publisher-wsp = "World Sci. Publ."}
+@STRING{publisher-wsplong = "World Sci. Pub Co Pte Ltd"}
+@STRING{wsp-ijhses = "Int. J. High Speed Electron. Syst."}
+@STRING{wsp-ijufkbs = "Int. J. Uncertainty, Fuzziness Knowledge-based Syst."}
+@STRING{wsp-prcv = "Pattern Recognit. Comput. Vis. New AI Era"}
+@STRING{wsp-series-cv = "Ser. Comput. Vis."}
+
+
 % ----------------------------------------------------
+% Editors with many journals/conferences
+% ----------------------------------------------------
+
 % ACM ( 10.1145 )
 % Journals
 @STRING{acm-cs = "ACM Comput. Surv."}
 @STRING{acm-cacm = "Commun. ACM"}
 @STRING{acm-scg = "ACM SIGGRAPH Comput. Graph."}
 @STRING{acm-thri = "ACM Trans. Human-robot Interact."}
+@STRING{acm-tiis = "ACM Trans. Interact. Intell. Syst."}
 @STRING{acm-tist = "ACM Trans. Intell. Syst. Technol."}
 @STRING{acm-tmcca = "ACM Trans. Multimedia Comput. Commun. Appl."}
 @STRING{acm-tog = "ACM Trans. Graph."}
 @STRING{acm-tois = "ACM Trans. Inf. Syst."}
 @STRING{acm-pcgit = "Proc. ACM Comput. Graph. Interact. Tech."}
-% OLD ENTRIES
-@STRING{acmcs = "ACM Comput. Surv."}
-@STRING{acmtog = "ACM Trans. Graph."}
-@STRING{acmtois = "ACM Trans. Inf. Syst."}
-@STRING{cacm = "Commun. ACM"}
 % Conferences
-@STRING{acm-c-automativeui = "Int. Conf. Automot. User Interfaces Interact. Veh. Appl. (automotiveui)"}
+@STRING{acm-c-adjunct-automativeui = "Adjun. Proc. Int. Conf. Automot. User Interfaces Interact. Veh. Appl. (AutomotiveUI)"}
+@STRING{acm-c-automativeui = "Int. Conf. Automot. User Interfaces Interact. Veh. Appl. (AutomotiveUI)"}
 @STRING{acm-c-bsdm = "ACM Int. Conf. Web Search Data Min."}
-@STRING{acm-c-chfcs= "Proc. CHI Conf. Hum. Factors Comput. Syst."}
+@STRING{acm-c-chfcs = "Proc. CHI Conf. Hum. Factors Comput. Syst."}
+@STRING{acm-c-cheafcs-pea = "Proc. Ext. Abstr. CHI Conf. Hum. Factors Comput. Syst."}
+@STRING{acm-c-chichfcs = "CHI Conf. Hum. Factors Comput. Syst."}
 @STRING{acm-c-kdd = "ACM SIGKDD Int. Conf. Knowl. Discov. Data Min. (KDD)"}
-@STRING{acm-c-icii = "Int. Conf. Intell. User Interfaces"}
+@STRING{acm-c-icaici = "Int. Conf. Artif. Intell. Comput. Intell. (AICI)"}
+@STRING{acm-c-icui = "Int. Conf. Intell. User Interfaces"}
 @STRING{acm-c-icme = "ACM Int. Conf. Interact. Media Exp."}
 @STRING{acm-c-icmip = "Int. Conf. Multimedia Image Process."}
+@STRING{acm-c-isigcgitccp = "Proc. Spéc. Interes. Group Comput. Graph. Interact. Tech. Conf. Conf. Pap."}
 @STRING{acm-c-m = "ACM Int. Conf. Multimedia"}
 @STRING{acm-c-maed = "ACM Int. Work. Multimedia Anal. Ecol. Data (MAED)"}
 @STRING{acm-c-maw = "ACM Multimedia Asia Work."}
 @STRING{acm-c-mmsports = "Int. ACM Work. Multimedia Content Anal. Sports (MMSports)"}
 @STRING{acm-c-msys = "ACM Multimedia Syst. Conf."}
 @STRING{acm-c-msysp = "Proc. ACM Multimedia Syst. Conf."}
+@STRING{acm-c-pcec = "Proc. ACM Conf. Econ. Comput."}
 @STRING{acm-c-puc = "ACM Int. Jt. Conf. Pervasive Ubiquitous Comput."}
 @STRING{acm-c-shfcs= "Proc. SIGCHI Conf. Hum. Factors Comput. Syst."}
 @STRING{acm-c-siggraph = "ACM Int. Conf. Comput. Graph. Interact. Tech. (SIGGRAPH)"}
@@ -173,24 +339,13 @@
 @STRING{acm-c-sigir = "ACM Int. Conf. Res. Dev. Inf. Retr. (SIGIR)"}
 @STRING{acm-w-vssn = "ACM Int. Work. Video Surveill. \& Sens. Networks (VSSN)"}
 @STRING{acm-w-narsum = "Work. User-centric Narrat. Summ. Long Videos (narsum)"}
-% OLD ENTRIES
-@STRING{acm-icm = "ACM Int. Conf. Multimedia"}
-@STRING{kdd = "ACM SIGKDD Int. Conf. Knowl. Discov. Data Min. (KDD)"}
-@STRING{mmsys-encoded = "Proc. ACM Multimedia Syst. Conf."}
-@STRING{siggraph = "ACM Int. Conf. Comput. Graph. Interact. Tech. (SIGGRAPH)"}
-@STRING{sigir = "ACM Int. Conf. Res. Dev. Inf. Retr. (SIGIR)"}
-@STRING{maed = "ACM Int. Work. Multimedia Anal. Ecol. Data (MAED)"}
-@STRING{mmsys = "ACM Multimedia Syst. Conf."}
-@STRING{vssn = "ACM Int. Work. Video Surveill. \& Sens. Networks (VSSN)"}
 
-% ----------------------------------------------------
-% EDP Sciences ( 10.1051 )
-@STRING{edps-aap = "Astron. \& Astrophys."}
-% OLD ENTRY
-@STRING{aap = "Astron. \& Astrophys."}
 
 % -------------------------------
 % IEEE ( 10.1109 )
+@STRING{publisher-ieee = "Inst. Electr. Electron. Eng. (IEEE)"}
+@STRING{publisher-ieee-cs = "IEEE Comput. Soc."}
+@STRING{publisher-ieee-short = "IEEE"}
 % Journals 
 @STRING{ieee-a = "IEEE Access"}
 @STRING{ieee-as = "IEEE/CAA J. Autom. Sin."}
@@ -198,6 +353,7 @@
 @STRING{ieee-bhi = "IEEE J. Biomed. Heal. Informatics"}
 @STRING{ieee-cst = "IEEE Commun. Surv. \& Tutorials"}
 @STRING{ieee-cga = "IEEE Comput. Graph. Appl."}
+@STRING{ieee-csm = "IEEE Control Syst. Mag."}
 @STRING{ieee-dd = "IEEE Data Descr."}
 @STRING{ieee-grsl = "IEEE Geosci. Remote Sens. Lett."}
 @STRING{ieee-grsm = "IEEE Geosci. Remote Sens. Mag."}
@@ -206,6 +362,8 @@
 @STRING{ieee-is = "IEEE Intell. Syst."}
 @STRING{ieee-it = "IEEE Trans. Inf. Theory"}
 @STRING{ieee-itsm = "IEEE Intell. Transp. Syst. Mag."}
+@STRING{ieee-j-pc = "IEEE Pervasive Comput."}
+@STRING{ieee-jra = "IEEE J. Robot. Autom."}
 @STRING{ieee-ojits = "IEEE Open J. Intell. Transp. Syst."}
 @STRING{ieee-pieee = "Proc. IEEE"}
 @STRING{ieee-ral = "IEEE Robot. Autom. Lett."}
@@ -222,6 +380,7 @@
 @STRING{ieee-tb = "IEEE Trans. Broadcast."}
 @STRING{ieee-tbe = "IEEE Trans. Biomed. Eng."}
 @STRING{ieee-tc = "IEEE Trans. Cybern."}
+@STRING{ieee-tcadics = "IEEE Trans. Comput. Des. Integr. Circuits Syst."}
 @STRING{ieee-tce = "IEEE Trans. Consum. Electron."}
 @STRING{ieee-tcomm = "IEEE Trans. Commun."}
 @STRING{ieee-tcomp = "IEEE Trans. Comput."}
@@ -233,20 +392,25 @@
 @STRING{ieee-tcs-1 = "IEEE Trans. Circuits Syst. I: Regul. Pap."}
 @STRING{ieee-tcs-2 = "IEEE Trans. Circuits Syst. II: Analog. Digit. Signal Process."}
 @STRING{ieee-tcsvt = "IEEE Trans. Circuits Syst. Video Technol."}
+@STRING{ieee-tct = "IEEE Trans. Commun. Technol."}
+@STRING{ieee-tfs = "IEEE Trans. Fuzzy Syst."}
 @STRING{ieee-tgrs = "IEEE Trans. Geosci. Remote Sens."}
 @STRING{ieee-thms = "IEEE Trans. Human-machine Syst."}
+@STRING{ieee-tie = "IEEE Trans. Ind. Electron."}
 @STRING{ieee-tifs = "IEEE Trans. Inf. Forensics Secur."}
 @STRING{ieee-tii = "IEEE Trans. Ind. Informatics"}
 @STRING{ieee-tim = "IEEE Trans. Instrum. Meas."}
 @STRING{ieee-tip = "IEEE Trans. Image Process."}
 @STRING{ieee-titb = "IEEE Trans. Inf. Technol. Biomed."}
 @STRING{ieee-tits = "IEEE Trans. Intell. Transp. Syst."}
+@STRING{ieee-tiv = "IEEE Trans. Intell. Veh."}
 @STRING{ieee-tkde = "IEEE Trans. Knowl. Data Eng."}
 @STRING{ieee-tm = "IEEE Trans. Multimedia"}
 @STRING{ieee-tmi = "IEEE Trans. Medical Imaging"}
 @STRING{ieee-tmrb = "IEEE Trans. Medical Robot. Bionics"}
 @STRING{ieee-tnn = "IEEE Trans. Neural Networks"}
 @STRING{ieee-tnnls = "IEEE Trans. Neural Networks Learn. Syst."}
+@STRING{ieee-tns = "IEEE Trans. Nucl. Sci."}
 @STRING{ieee-tpami = "IEEE Trans. Pattern Anal. Mach. Intell."}
 @STRING{ieee-tpd = "IEEE Trans. Power Deliv."}
 @STRING{ieee-tnsre = "IEEE Trans. Neural Syst. Rehabilitation Eng."}
@@ -263,63 +427,12 @@
 @STRING{ieee-tvt = "IEEE Trans. Veh. Technol."}
 @STRING{ieee-twc = "IEEE Trans. Wirel. Commun."}
 @STRING{ieee-wc = "IEEE Wirel. Commun."}
-% OLD ENTTRIES
-@STRING{aslp = "IEEE Trans. Audio, Speech Lang. Process."}
-@STRING{asp = "IEEE Trans. Signal Process."}
-@STRING{assp = "IEEE Trans. Acoust. Speech Signal Process."}
-@STRING{cs = "IEEE Trans. Circuits Syst."}
-@STRING{ibhi = "IEEE J. Biomed. Heal. Informatics"}
-@STRING{ieeea = "IEEE Access"}
-@STRING{ieeease = "IEEE Trans. Autom. Sci. Eng."}
-@STRING{ieeec = "IEEE Trans. Cybern."}
-@STRING{ieeecsvt = "IEEE Trans. Circuits Syst. Video Technol."}
-@STRING{ieeecst = "IEEE Commun. Surv. \& Tutorials"}
-@STRING{ieeece = "IEEE Trans. Consum. Electron."}
-@STRING{ieeegrs = "IEEE Trans. Geosci. Remote Sens."}
-@STRING{ieeegrsl = "IEEE Geosci. Remote Sens. Lett."}
-@STRING{ieeeifs = "IEEE Trans. Inf. Forensics Secur."}
-@STRING{ieeeii = "IEEE Trans. Ind. Informatics"}
-@STRING{ieeeis = "IEEE Intell. Syst."}
-@STRING{ieeeits = "IEEE Trans. Intell. Transp. Syst."}
-@STRING{ieeejas = "IEEE/CAA J. Autom. Sin."}
-@STRING{ieeejqe = "IEEE J. Quantum Electron."}
-@STRING{ieeensre = "IEEE Trans. Neural Syst. Rehabilitation Eng."}
-@STRING{ieeeojits = "IEEE Open J. Intell. Transp. Syst."}
-@STRING{ieeepami = "IEEE Trans. Pattern Anal. Mach. Intell."}
-@STRING{ieeepd = "IEEE Trans. Power Deliv."}
-@STRING{ieeesj = "IEEE Sensors J."}
-@STRING{ieeestsp = "IEEE J. Sel. Top. Signal Process."}
-@STRING{ieeer = "IEEE Trans. Robot."}
-@STRING{ieeera = "IEEE Trans. Robot. Autom."}
-@STRING{ieeeral = "IEEE Robot. Autom. Lett."}
-@STRING{ieeesac = "IEEE J. Sel. Areas Commun."}
-@STRING{ieeesmc = "IEEE Trans. Syst. Man, Cybern."}
-@STRING{ieeesmca = "IEEE Trans. Syst. Man, Cybern. -- Part A: Syst. Humans"}
-@STRING{ieeesmcb = "IEEE Trans. Syst. Man, Cybern. -- Part B: Cybern."}
-@STRING{ieeesmcc = "IEEE Trans. Syst. Man, Cybern. -- Part C: Appl. Rev."}
-@STRING{ieeesmcs = "IEEE Trans. Syst. Man, Cybern.: Syst."}
-@STRING{ieeespl = "IEEE Signal Process. Lett."}
-@STRING{ieeespm = "IEEE Signal Process. Mag."}
-@STRING{ieeetb = "IEEE Trans. Broadcast."}
-@STRING{ieeetbe = "IEEE Trans. Biomed. Eng."}
-@STRING{ieeetec = "IEEE Trans. Evol. Comput."}
-@STRING{ieeetim = "IEEE Trans. Instrum. Meas."}
-@STRING{ieeetm = "IEEE Trans. Multimedia"}
-@STRING{ieeetmi = "IEEE Trans. Medical Imaging"}
-@STRING{ieeetvt = "IEEE Trans. Veh. Technol."}
-@STRING{it = "IEEE Trans. Inf. Theory"}
-@STRING{itcomm = "IEEE Trans. Commun."}
-@STRING{itcomp = "IEEE Trans. Comput."}
-@STRING{itkde = "IEEE Trans. Knowl. Data Eng."}
-@STRING{itip = "IEEE Trans. Image Process."}
-@STRING{ithms = "IEEE Trans. Human-machine Syst."}
-@STRING{ititb = "IEEE Trans. Inf. Technol. Biomed."}
-@STRING{itnn = "IEEE Trans. Neural Networks"}
-@STRING{itnnls = "IEEE Trans. Neural Networks Learn. Syst."}
-@STRING{pieee = "Proc. IEEE"}
 
 % Conferences/symposia/workshops
+@STRING{ieee-c-aina = "IEEE Int. Conf. Adv. Inf. Netw. Appl. (AINA)"}
 @STRING{ieee-c-avss = "IEEE Int. Conf. Adv. Video Signal Based Surveill. (AVSS)"}
+@STRING{ieee-c-bibm = "IEEE Int. Conf. Bioinform. Biomed. (BIBM)"}
+@STRING{ieee-c-bigdata = "IEEE Int. Conf. Big Data (bigdata)"}
 @STRING{ieee-c-bsn = "IEEE Int. Conf. Wearable Implant. Body Sens. Networks (BSN)"}
 @STRING{ieee-c-btas = "IEEE Int. Conf. Biom.: Theory, Appl. Syst. (BTAS)"}
 @STRING{ieee-c-cai = "IEEE Conf. Artif. Intell. (CAI)"}
@@ -336,7 +449,7 @@
 @STRING{ieee-c-icarce = "Int. Conf. Autom. Robot. Comput. Eng. (ICARCE)"}
 @STRING{ieee-c-icassp = "IEEE Int. Conf. Acoust. Speech Signal Process. (ICASSP)"}
 @STRING{ieee-c-icccas = "IEEE Int. Conf. Commun. Circuits Syst. (ICCCAS)"}
-@STRING{ieee-c-iccece = "Int. Conf. Consum. Electron. Comput. Eng. (ICCECE)"}
+@STRING{ieee-c-icce = "IEEE Int. Conf. Consum. Electron. (ICCE)"}
 @STRING{ieee-c-icces = "IEEE Int. Conf. Comput. Eng. \& Syst. (ICCES)"}
 @STRING{ieee-c-iccp = "IEEE Int. Conf. Intell. Comput. Commun. Process. (ICCP)"}
 @STRING{ieee-c-iccsce = "IEEE Int. Conf. Control Syst. Comput. Eng. (ICCSCE)"}
@@ -344,17 +457,20 @@
 @STRING{ieee-c-iccvx = "IEEE/CVF Int. Conf. Comput. Vis. (ICCV)"}
 @STRING{ieee-c-iccvw = "IEEE Int. Conf. Comput. Vis. Work. (ICCV Work.)"}
 @STRING{ieee-c-iccvwx = "IEEE/CVF Int. Conf. Comput. Vis. Work. (ICCV Work.)"}
+@STRING{ieee-c-icdm = "IEEE Int. Conf. Data Min."}
 @STRING{ieee-c-iceace = "IEEE Int. Conf. Electr. Autom. Comput. Eng. (ICEACE)"}
 @STRING{ieee-c-icia = "IEEE Int. Conf. Inf. Autom. (ICIA)"}
 @STRING{ieee-c-iciba = "IEEE Int. Conf. Inf. Technol. Big Data Artif. Intell. (ICIBA)"}
 @STRING{ieee-c-iciev = "IEEE Int. Conf. Informatics, Electron. Vis. (ICIEV)"}
 @STRING{ieee-c-icif = "IEEE Int. Conf. Inf. Fusion (FUSION)"}
+@STRING{ieee-c-iciip = "IEEE Int. Conf. Image Inf. Process. (ICIIP)"}
 @STRING{ieee-c-icip = "IEEE Int. Conf. Image Process. (ICIP)"}
 @STRING{ieee-c-icist = "Int. Conf. Inf. Sci. Technol. (ICIST)"}
 @STRING{ieee-c-icit = "IEEE Int. Conf. Ind. Technol. (ICIT)"}
 @STRING{ieee-c-icma = "IEEE Int. Conf. Mechatronics Autom. (ICMA)"}
 @STRING{ieee-c-icme = "IEEE Int. Conf. Multimedia Expo (ICME)"}
 @STRING{ieee-c-icmew = "IEEE Int. Conf. Multimedia Expo Work. (ICMEW)"}
+@STRING{ieee-c-icmew-bigsurv = "IEEE Int. Conf. Multimedia Expo Work. (ICMEW), Work. Big Surveill. Data Anal. Process. (big-surv)"}
 @STRING{ieee-c-icmla = "IEEE Int. Conf. Mach. Learn. Appl. (ICMLA)"}
 @STRING{ieee-c-icpp = "IEEE Int. Conf. Parallel Process. (ICPP)"}
 @STRING{ieee-c-icpr = "IEEE Int. Conf. Pattern Recognit. (ICPR)"}
@@ -365,20 +481,20 @@
 @STRING{ieee-c-icvprx = "IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)"}
 @STRING{ieee-c-icvprw = "IEEE Int. Conf. Comput. Vis. Pattern Recognit. Work. (CVPRW)"}
 @STRING{ieee-c-icvprwx = "IEEE/CVF Conf. Comput. Vis. Pattern Recognit. Work. (CVPRW)"}
-@STRING{ieee-c-iecon = "Annu. Conf. IEEE Ind. Electron. Soc. (IECON)"}
-@STRING{ieee-c-ijcnn = "Int. Jt. Conf. Neural Networks (IJCNN)"}
 @STRING{ieee-c-imcec = "IEEE Adv. Inf. Manag. Commun. Electron. Autom. Control Conf. (IMCEC)"}
 @STRING{ieee-c-infocom = "IEEE Int. Conf. Comput. Commun."}
 @STRING{ieee-c-ipec = "IEEE Asia-pacific Conf. Image Process. Electron. Comput. (IPEC)"}
 @STRING{ieee-c-iros = "IEEE/RSJ Int. Conf. Intell. Robot. Syst. (IROS)"}
 @STRING{ieee-c-ismar = "IEEE Int. Symp. Mix. Augment. Real."}
+@STRING{ieee-c-isscc = "IEEE Int. Solid-state Circuits Conf. (ISSCC)"}
 @STRING{ieee-c-ist = "IEEE Int. Conf. Imaging Syst. Tech. (IST)"}
 @STRING{ieee-c-itaic = "IEEE Jt. Int. Inf. Technol. Artif. Intell. Conf. (ITAIC)"}
+@STRING{ieee-c-itnec ="IEEE Inf. Technol. Networking, Electron. Autom. Control Conf. (ITNEC)"}
 @STRING{ieee-c-itsc = "IEEE Int. Conf. Intell. Transp. Syst. (ITSC)"}
+@STRING{ieee-c-itsc-short = "IEEE Intell. Transp. Syst. Conf. (ITSC)"}
 @STRING{ieee-c-itw = "IEEE Inf. Theory Work. (ITW)"}
 @STRING{ieee-c-iwssip = "IEEE Int. Conf. Syst. Signals Image Process. (IWSSIP)"}
 @STRING{ieee-c-mipr = "IEEE Conf. Multimedia Inf. Process. Retr. (MIPR)"}
-@STRING{ieee-c-procams = "IEEE Int. Work. Proj. Syst. (PROCAMS)"}
 @STRING{ieee-c-robio = "IEEE Int. Conf. Robot. Biomimetics (ROBIO)"}
 @STRING{ieee-c-sbmc = "IEEE Int. Conf. Pattern Recognit. (ICPR), IEEE Scene Backgr. Model. Contest (SBMC)"}
 @STRING{ieee-c-secon = "IEEE Int. Conf. Sensing, Commun. Netw. (SECON)"}
@@ -395,105 +511,95 @@
 @STRING{ieee-s-iscas = "IEEE Int. Symp. Circuits Syst. (ISCAS)"}
 @STRING{ieee-s-igarss = "IEEE Int. Geosci. Remote Sens. Symp. (IGARSS)"}
 @STRING{ieee-s-isie = "IEEE Int. Symp. Ind. Electron. (ISIE)"}
-@STRING{ieee-s-ism = "IEEE Int. Symp. Multimedia (ISM)"}
+@STRING{ieee-s-saci = "IEEE Int. Symp. Appl. Comput. Intell. Informatics (SACI)"}
 @STRING{ieee-w-aspaa = "IEEE Work. Appl. Signal Process. Audio Acoust."}
 @STRING{ieee-w-msp = "IEEE Work. Multimedia Signal Process."}
 @STRING{ieee-w-pets = "IEEE Int. Work. Perform. Evaluation Track. Surveill. (PETS)"}
+@STRING{ieee-w-procams = "IEEE Int. Work. Proj. Syst. (PROCAMS)"}
 @STRING{ieee-w-smbv = "IEEE Work. Ster. Multi-baseline Vis. (SMBV)"}
+@STRING{ieee-w-spw = "IEEE Secur. Priv. Work. (SPW)"}
 @STRING{ieee-w-star = "IEEE Int. Work. Sport Technol. Res. (STAR)"}
 
 % Conferences/Workshops edited by the IEEE that do not contian IEEE in their name
-@STRING{ieee-icccnt = "Int. Conf. Comput. Commun. Netw. Technol. (ICCCNT)"}
+@STRING{ieee-c-acait = "Asian Conf. Artif. Intell. Technol. (ACAIT)"}
+@STRING{ieee-c-iccas = "Int. Conf. Control Autom. Syst. (ICCAS)"}
+@STRING{ieee-c-iccece = "Int. Conf. Consum. Electron. Comput. Eng. (ICCECE)"}
+@STRING{ieee-c-icct = "Int. Conf. Consum. Technol. (icct-pacific)"}
+@STRING{ieee-c-ichci = "Int. Conf. Human-Comput. Interact."}
+@STRING{ieee-c-icirdc = "Int. Conf. Internet Things, Robot. Distrib. Comput. (ICIRDC)"}
+@STRING{ieee-c-icisss = "Int. Conf. Intell. Sustain. Syst. (ICISS)"}
+@STRING{ieee-c-icmi = "Int. Conf. Comput. Mach. Intell. (ICMI)"}
+@STRING{ieee-c-icnc = "Int. Conf. Comput. Netw. Commun. (ICNC)"}
+@STRING{ieee-c-icpr-old = "Int. Conf. Pattern Recognit. (ICPR)"}
+@STRING{ieee-c-iciptta = "Int. Conf. Image Process. Theory, Tools Appl."}
+@STRING{ieee-c-idciot = "Int. Conf. Intell. Data Commun. Technol. Internet Things (idciot)"}
+@STRING{ieee-c-iecon = "Annu. Conf. IEEE Ind. Electron. Soc. (IECON)"}
+@STRING{ieee-c-ijcnn = "Int. Jt. Conf. Neural Networks (IJCNN)"}
+@STRING{ieee-c-imcssgp = "Int. Multi-conference Smart Syst. \& Green Process. (IMC-SSGP)"}
+@STRING{ieee-c-irec = "Int. Renew. Energy Congr. (IREC)"}
+@STRING{ieee-c-mocast = "Int. Conf. Mod. Circuits Syst. Technol. (MOCAST)"}
+@STRING{ieee-c-sibgrapi = "Conf. Graph. Patterns Images (SIBGRAPI)"}
 @STRING{ieee-csip = "Int. Conf. Comput. Sci. Inf. Process. (CSIP)"}
+@STRING{ieee-c-wicom = "Int. Conf. Wirel. Commun. Netw. Mob. Comput. (wicom)"}
 @STRING{ieee-ecai = "Int. Conf. Electron. Comput. Artif. Intell. (ECAI)"}
+@STRING{ieee-icccnt = "Int. Conf. Comput. Commun. Netw. Technol. (ICCCNT)"}
+@STRING{ieee-icmlc = "Int. Conf. Mach. Learn. Cybern. (ICMLC)"}
 @STRING{ieee-icnc = "Int. Conf. Nat. Comput."}
 @STRING{ieee-icsip = "Int. Conf. Signal Image Process. (ICSIP)"}
+@STRING{ieee-iretit = "IRE Trans. Inf. Theory"}
 @STRING{ieee-isctis = "Int. Symp. Comput. Technol. Inf. Sci. (ISCTIS)"}
+@STRING{ieee-j-sc = "J. Soc. Comput."}
 @STRING{ieee-mapr = "Int. Conf. Multimedia Anal. Pattern Recognit. (MAPR)"}
 @STRING{ieee-picet = "Parul Int. Conf. Eng. Technol. (PICET)"}
+@STRING{ieee-s-ism = "Int. Symp. Multimedia (ISM)"}
+@STRING{ieee-s-isplca = "Int. Symp. Power Line Commun. Its Appl."}
 @STRING{ieee-sitis = "Int. Conf. Signal-image Technol. \& Internet-based Syst. (SITIS)"}
 @STRING{ieee-ubmk = "Int. Conf. Comput. Sci. Eng. (UBMK)"}
 % OLD ENTRIES 
-@STRING{aspaa = "IEEE Work. Appl. Signal Process. Audio Acoust."}
-@STRING{afgr = "IEEE Int. Conf. Autom. Face Gesture Recognit. (FGR)"}
-@STRING{avss = "IEEE Int. Conf. Adv. Video Signal Based Surveill. (AVSS)"}
-@STRING{bsn = "IEEE Int. Conf. Wearable Implant. Body Sens. Networks (BSN)"}
-@STRING{btas = "IEEE Int. Conf. Biom.: Theory, Appl. Syst. (BTAS)"}
-@STRING{cvsports = "IEEE Int. Conf. Comput. Vis. Pattern Recognit. Work. (CVPRW), CVsports"}
-@STRING{embc = "Annu. Int. Conf. IEEE Eng. Medicine Biology Soc. (EMBC)"}
-@STRING{fuzzieee = "IEEE Int. Conf. Fuzzy Syst. (FUZZ-IEEE)"}
-@STRING{ic3d = "IEEE Int. Conf. 3D Imaging (IC3D)"}
-@STRING{icar = "IEEE Int. Conf. Adv. Robot. (ICAR)"}
-@STRING{icassp = "IEEE Int. Conf. Acoust. Speech Signal Process. (ICASSP)"}
-@STRING{icccas = "IEEE Int. Conf. Commun. Circuits Syst. (ICCCAS)"}
-@STRING{icces = "IEEE Int. Conf. Comput. Eng. \& Syst. (ICCES)"}
-@STRING{iccsce = "IEEE Int. Conf. Control Syst. Comput. Eng. (ICCSCE)"}
-@STRING{iccv = "IEEE Int. Conf. Comput. Vis. (ICCV)"}
-@STRING{iccvw = "IEEE Int. Conf. Comput. Vis. Work. (ICCV Work.)"}
-@STRING{icia = "IEEE Int. Conf. Inf. Autom. (ICIA)"}
-@STRING{iciev = "IEEE Int. Conf. Informatics, Electron. Vis. (ICIEV)"}
-@STRING{icif = "IEEE Int. Conf. Inf. Fusion (FUSION)"}
-@STRING{icip = "IEEE Int. Conf. Image Process. (ICIP)"}
-@STRING{icit = "IEEE Int. Conf. Ind. Technol. (ICIT)"}
-@STRING{icma = "IEEE Int. Conf. Mechatronics Autom. (ICMA)"}
-@STRING{icme = "IEEE Int. Conf. Multimedia Expo (ICME)"}
-@STRING{icmew = "IEEE Int. Conf. Multimedia Expo Work. (ICMEW)"}
-@STRING{icmla = "IEEE Int. Conf. Mach. Learn. Appl. (ICMLA)"}
-@STRING{icpp = "IEEE Int. Conf. Parallel Process. (ICPP)"}
-@STRING{icpr = "IEEE Int. Conf. Pattern Recognit. (ICPR)"}
-@STRING{icra = "IEEE Int. Conf. Robot. Autom. (ICRA)"}
-@STRING{icsp = "IEEE Int. Conf. Signal Process. (ICSP)"}
-@STRING{ictai = "IEEE Int. Conf. Tools Artif. Intell. (ICTAI)"}
-@STRING{icvpr = "IEEE Int. Conf. Comput. Vis. Pattern Recognit. (CVPR)"}
-@STRING{icvprx = "IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)"}
-@STRING{icvprw = "IEEE Int. Conf. Comput. Vis. Pattern Recognit. Work. (CVPRW)"}
-@STRING{icvprwx = "IEEE/CVF Conf. Comput. Vis. Pattern Recognit. Work. (CVPRW)"}
-@STRING{igarss = "IEEE Int. Geosci. Remote Sens. Symp. (IGARSS)"}
-@STRING{iivs = "IEEE Intell. Veh. Symp."}
-@STRING{iros = "IEEE/RSJ Int. Conf. Intell. Robot. Syst. (IROS)"}
-@STRING{isie = "IEEE Int. Symp. Ind. Electron. (ISIE)"}
-@STRING{ist = "IEEE Int. Conf. Imaging Syst. Tech. (IST)"}
-@STRING{iscas = "IEEE Int. Symp. Circuits Syst. (ISCAS)"}
-@STRING{itaic = "IEEE Jt. Int. Inf. Technol. Artif. Intell. Conf. (ITAIC)"}
-@STRING{itsc = "IEEE Int. Conf. Intell. Transp. Syst. (ITSC)"}
-@STRING{iwssip = "IEEE Int. Conf. Syst. Signals Image Process. (IWSSIP)"}
-@STRING{mipr = "IEEE Conf. Multimedia Inf. Process. Retr. (MIPR)"}
-@STRING{pets = "IEEE Int. Work. Perform. Evaluation Track. Surveill. (PETS)"}
-@STRING{procams = "IEEE Int. Work. Proj. Syst. (PROCAMS)"}
-@STRING{robio = "IEEE Int. Conf. Robot. Biomimetics (ROBIO)"}
-@STRING{sbmc = "IEEE Int. Conf. Pattern Recognit. (ICPR), IEEE Scene Backgr. Model. Contest (SBMC)"}
-@STRING{smc = "IEEE Int. Conf. Syst. Man, Cybern. (SMC)"}
-@STRING{uavision = "IEEE Int. Conf. Comput. Vis. Pattern Recognit. Work. (CVPRW), UAVision"}
-@STRING{vcip = "IEEE Int. Conf. Vis. Commun. Image Process. (VCIP)"}
-@STRING{vecims = "IEEE Int. Conf. Virtual Environ. Human-Comput. Interfaces, Meas. Syst. (VECIMS)"}
-@STRING{wacv = "IEEE Winter Conf. Appl. Comput. Vis. (WACV)"}
-@STRING{wacvx = "IEEE/CVF Winter Conf. Appl. Comput. Vis. (WACV)"}
-@STRING{wacvw = "IEEE Winter Conf. Appl. Comput. Vis. Work. (WACVW)"}
-@STRING{wacvwx = "IEEE/CVF Winter Conf. Appl. Comput. Vis. Work. (WACVW)"}
 @STRING{wmsp = "IEEE Work. Multimedia Signal Process."}
 
 % ----------------------------------------------------
-% IEE ( )
+% mdpi ( 10.3390 )
+@STRING{publisher-mdpi = "MDPI"}
+@STRING{publisher-mdpiag = "MDPI AG"}
 % Journals
-@STRING{iee-cdt = "IEE Proceedings~E, Comput. Digit. Tech."}
-@STRING{iee-csv = "IEE Proceedings~I, Commun. Speech Vis."}
-@STRING{iee-el = "IEE Electron. Lett."}
-@STRING{iee-rsp = "IEE Proceedings~F, Radar Signal Process."}
-% OLD ENTRIES
-@STRING{cdt = "IEE Proceedings~E, Comput. Digit. Tech."}
-@STRING{crsp = "IEE Proceedings~F, Radar Signal Process."}
-@STRING{csv = "IEE Proceedings~I, Commun. Speech Vis."}
-@STRING{el = "IEE Electron. Lett."}
+@STRING{mdpi-j-agri = "Agriculture"}
+@STRING{mdpi-j-elec = "Electronics"}
+@STRING{mdpi-j-jfmk = "J. Funct. Morphol. Kinesiol."}
+@STRING{mdpi-j-ojerph = "Int. J. Environ. Res. Public Heal."}
+@STRING{mdpi-j-mlke = "Mach. Learn. \& Knowl. Extr."}
+@STRING{mdpi-j-mse = "J. Mar. Sci. Eng."}
+% Conferences
 
 % ----------------------------------------------------
 % springer ( 10.1007 )
+@STRING{publisher-springer = "Springer"}
+@STRING{publisher-springerbh = "Springer Berl. Heidelb."}
+@STRING{publisher-springerip = "Springer Int. Publ."}
+@STRING{publisher-springerip-address = "Cham, Switz."}
+@STRING{publisher-springerl = "Springer Lond."}
+@STRING{publisher-springerny = "Springer New York"}
+@STRING{publisher-springers = "Springer Singap."}
+@STRING{publisher-springersbm = "Springer Sci. Bus. Media LLC"}
+@STRING{publisher-springersn = "Springer Nat. Singap."}
+@STRING{publisher-springerswiss = "Springer Nat. Switz."}
+% Series
+@STRING{springer-series-ittps = "Inf. Technol.: Transm. Process. Storage"}
+@STRING{springer-series-sts = "Springer Texts Stat."}
+@STRING{springer-series-sums = "Springer Undergrad. Math. Ser."}
 % Journals
 @STRING{springer-j-air = "Artif. Intell. Rev."}
+@STRING{springer-j-at = "Ann. Des T{\'e}l{\'e}communications"}
+@STRING{springer-j-at-eng = "Ann. Telecommun."}
 @STRING{springer-j-c = "J. Classif."}
+@STRING{springer-j-ctw = "Cogn. Technol. \& Work."}
+@STRING{springer-j-ebr = "Exp. Brain Res."}
 @STRING{springer-j-nm = "Numer. Math."}
 @STRING{springer-ijmir = "Int. J. Multimedia Inf. Retr."}
 @STRING{springer-j-mp = "Math. Program."}
 @STRING{springer-j-npl = "Neural Process. Lett."}
+@STRING{springer-j-ijpp = "Int. J. Parallel Program."}
+@STRING{springer-j-sc = "Stat. Comput."}
 @STRING{springer-j-sm = "Sports Medicine"}
 @STRING{springer-j-spe = "Sports Eng."}
 @STRING{springer-j-vc = "Vis. Comput."}
@@ -501,9 +607,14 @@
 @STRING{springer-c-asc = "Adv. Soft Comput."}
 @STRING{springer-c-eis = "Enterp. Inf. Syst."}
 @STRING{springer-c-icaus = "Int. Conf. Auton. Unmanned Syst."}
+@STRING{springer-c-icstte = "Int. Conf. Smartrail, Traffic Transp. Eng."}
 @STRING{springer-c-isace = "Int. Sports Anal. Conf. Exhib."}
+@STRING{springer-c-ijccvicg = "Int. Jt. Conf. Comput. Vis. Imaging Comput. Graph." }
+@STRING{springer-c-lt = "Learn. Theory"}
 @STRING{springer-c-micai = "Int. Conf. Medical Image Comput. Comput. Interv."}
 @STRING{springer-c-jecmlkdd = "Jt. Eur. Conf. Mach. Learn. Knowl. Discov. Databases"}
+@STRING{springer-c-sset = "Int. Conf. Smart Syst. Emerg. Technol."}
+@STRING{springer-w-dart = "MICCAI Work. Domain Adapt. Represent. Transf."}
 
 % ----------------------------------------------------
 % elsevier ( 10.1016 )
@@ -516,166 +627,78 @@
 @STRING{elsevier-j-aej = "Alex. Eng. J."}
 @STRING{elsevier-j-bba = "Biochim. Et Biophys. Acta (BBA) - Protein Struct."}
 @STRING{elsevier-j-biomec = "J. Biomech."}
+@STRING{elsevier-j-brm = "Behav. Res. Methods"}
+@STRING{elsevier-j-bspc = "Biomed. Signal Process. Control"}
 @STRING{elsevier-j-cam = "J. Comput. Appl. Math."}
+@STRING{elsevier-j-c = "J. Complex."}
 @STRING{elsevier-j-ce = "J. Clin. Epidemiology"}
 @STRING{elsevier-j-chb = "Comput. Hum. Behav."}
 @STRING{elsevier-j-cils = "Chemom. Intell. Lab. Syst."}
+@STRING{elsevier-j-css = "J. Comput. Syst. Sci."}
 @STRING{elsevier-j-displays = "Displays"}
 @STRING{elsevier-j-eaai = "Eng. Appl. Artif. Intell."}
+@STRING{elsevier-j-ejor = "Eur. J. Oper. Res."}
 @STRING{elsevier-j-err = "Educ. Res. Rev."}
+@STRING{elsevier-j-fss = "Fuzzy Sets Syst."}
 @STRING{elsevier-j-gen = "Genomics"}
+@STRING{elsevier-j-if = "Inf. Fusion"}
+@STRING{elsevier-j-ijar = "Int. J. Approx. Reason."}
+@STRING{elsevier-j-ijfc = "IFAC J. Syst. Control"}
 @STRING{elsevier-j-ijp = "Int. J. Psychophysiol."}
 @STRING{elsevier-j-ipl = "Inf. Process. Lett."}
 @STRING{elsevier-j-ipm = "Inf. Process. \& Manag."}
+@STRING{elsevier-j-ipt = "Infrared Phys. \& Technol."}
+@STRING{elsevier-j-is = "Inf. Sci."}
 @STRING{elsevier-j-kbs = "Knowledge-based Syst."}
+@STRING{elsevier-j-m = "Measurement"}
 @STRING{elsevier-j-mia = "Medical Image Anal."}
 @STRING{elsevier-j-ml = "Mach. Learn."}
 @STRING{ml = "Mach. Learn."}
 @STRING{elsevier-j-mp = "J. Math. Psychol."}
+@STRING{elsevier-j-nca = "J. Netw. Comput. Appl."}
+@STRING{elsevier-j-neuraln= "Neural Networks"}
+@STRING{elsevier-j-olt = "Opt. \& Laser Technol."}
 @STRING{elsevier-j-ort = "J. Outdoor Recreat. Tour."}
 @STRING{elsevier-j-pb = "Physiol. \& Behav."}
+@STRING{elsevier-j-pm = "Procedia Manuf."}
 @STRING{elsevier-j-pvm = "Prev. Veterinary Medicine"}
+@STRING{elsevier-j-ras = "Robot. Auton. Syst."}
 @STRING{elsevier-j-re = "Results Eng."}
+@STRING{elsevier-j-remote = "Remote Sens. Environ."}
 @STRING{elsevier-j-sa = "J. Syst. Arch."}
 @STRING{elsevier-j-sm = "Stat. Methodol."}
+@STRING{elsevier-j-ss = "Saf. Sci."}
 @STRING{elsevier-j-tret = "Transp. Res. Part C: Emerg. Technol."}
 @STRING{elsevier-j-trip = "Transp. Res. Interdiscip. Perspect."}
 @STRING{elsevier-j-trpf = "Transp. Res. Part F: Traffic Psychol. Behav."}
 @STRING{elsevier-j-vrih = "Virtual Real. \& Intell. Hardw. (VRIH)"}
 @STRING{elsevier-mla = "Mach. Learn. Appl."}
-% OLD ENTRIES
 % Conferences
-% OLD ENTRIES
-
-% ----------------------------------------------------
-% eurasip ( 10.1155 )
-% Journals
-% OLD ENTRIES
-% Conferences
-% OLD ENTRIES
-
-% ----------------------------------------------------
-% j-stage ( 10.10.3169 )
-% Journals
-@STRING{jstage-j-itetmta = "ITE Trans. Media Technol. Appl."}
-% Conferences
-
-% ----------------------------------------------------
-% SciTePress ( 10.5220/0010770600003124 )
-% Journals
-% Conferences
-@STRING{scitepress-ijccv = "Int. Jt. Conf. Comput. Vis. Imaging Comput. Graph. Theory Appl." }
-
-% ----------------------------------------------------
-% Public Library of Science (PLoS) ( 10.1371 )
-% Journals
-@STRING{plos-plosone = "PLOS ONE"}
-% Conferences
-
-% ----------------------------------------------------
-% Annual Reviews ( 10.1146 )
-@STRING{publisher-ar = "Annu. Rev."}
-% Journals
-@STRING{ar-j-isa = "Annu. Rev. Stat. Its Appl."}
-
-% ----------------------------------------------------
-% spie ( 10.1117 )
-% Journals
-% OLD ENTRIES
-% Conferences
-@STRING{spie-c-cisai = "Int. Conf. Comput. Inf. Sci. Artif. Intell. (CISAI)"}
-@STRING{spie-c-srmam = "Storage Retr. Methods Appl. Multimedia"}
-% OLD ENTRIES
-
-% ----------------------------------------------------
-% eurasip ( 10.1155 )
-% Journals
-% OLD ENTRIES
-% Conferences
-% OLD ENTRIES
 
 % ----------------------------------------------------
 % wiley ( 10.1002 )
 @STRING{publisher-wiley = "John Wiley \& Sons"}
 % Journals
 @STRING{wiley-bj = "Biom. J."}
+@STRING{wiley-j-ais = "Adv. Intell. Syst."}
+@STRING{wiley-j-asis = "J. Am. Soc. Inf. Sci."}
+@STRING{wiley-j-cgf = "Comput. Graph. Forum"}
+@STRING{wiley-j-cnp = "J. Comp. Neurol. Psychol."}
 @STRING{wiley-j-cpam = "Commun. Pure Appl. Math."}
+@STRING{wiley-j-ejsp = "Eur. J. Soc. Psychol."}
+@STRING{wiley-j-mi = "Mol. Informatics"}
 @STRING{wiley-j-mri = "J. Magn. Reson. Imaging"}
+@STRING{wiley-j-pnss = "J. Plant Nutr. Soil Sci."}
 @STRING{wiley-j-qjrms = "Q. J. R. Meteorol. Soc."}
 @STRING{wiley-j-sm = "Stat. Medicine"}
 @STRING{wiley-j-vcp = "Veterinary Clin. Pathol."}
 @STRING{wiley-j-vs = "J. Veg. Sci."}
-% OLD ENTRIES
-@STRING{ejsp = "Eur. J. Soc. Psychol."}
-
-% Conferences
-% OLD ENTRIES
-
-% ----------------------------------------------------
-% mdpi ( 10.3390 )
-% Journals
-@STRING{mdpi-j-jfmk = "J. Funct. Morphol. Kinesiol."}
-@STRING{mdpi-j-ojerph = "Int. J. Environ. Res. Public Heal."}
-@STRING{mdpi-j-mlke = "Mach. Learn. \& Knowl. Extr."}
 % Conferences
 
-% ----------------------------------------------------
-% nature ( 10.1038 )
-% Journals
-@STRING{nature-j-nc = "Nat. Commun."}
-@STRING{nature-j-nm = "Nat. Methods"}
-% OLD ENTRIES
-% Conferences
-% OLD ENTRIES
+
 
 % ----------------------------------------------------
-% taylor francis ( 10.1201 )
-% Journals
-% OLD ENTRIES
-% Conferences
-% OLD ENTRIES
-
-% ----------------------------------------------------
-% sage ( 10.1177 )
-@STRING{publisher-sage = "SAGE Publ."}
-% Journals
-@STRING{sage-j-epm = "Educ. Psychol. Meas."}
-@STRING{sage-j-hf = "Hum. Factors: J. Hum. Factors Ergon. Soc."}
-@STRING{sage-j-pime = "Proc. Inst. Mech. Eng. Part D: J. Automob. Eng."}
-@STRING{sage-j-trr-jtrb = "Transp. Res. Rec.: J. Transp. Res. Board"}
-% Conferences
-@STRING{sage-c-hfesam = "Proc. Hum. Factors Ergon. Soc. Annu. Meet."}
-
-% ----------------------------------------------------
-% iop ( 10.1088 )
-% Journals
-% OLD ENTRIES
-% Conferences
-% OLD ENTRIES
-
-% ----------------------------------------------------
-% publisher-tsp ( 10.32604 )
-% Journals
-@STRING{tsp-iasc = "Intell. Autom. \& Soft Comput."}
-% Conferences
-
-% ----------------------------------------------------
-% walterdg ( 10.2478 )
-% Journals
-% OLD ENTRIES
-% Conferences
-% OLD ENTRIES
-
-% ----------------------------------------------------
-% Template
-% IEE ( )
-% Journals
-% OLD ENTRIES
-% Conferences
-% OLD ENTRIES
-
-% ----------------------------------------------------
-% Journals 
+% Single journals 
 % ----------------------------------------------------
 @STRING{ai = "Artif. Intell."}
 @STRING{anrt = "Association Nationale de la Recherche Technique"}
@@ -684,12 +707,11 @@
 @STRING{as = "Acta Ster."}
 @STRING{ar = "Auton. Robot."}
 @STRING{aroc = "Appl. Res. Comput."}
-@STRING{at = "Annales des T\'el\'ecommunications"} #
 @STRING{atsip = "APSIPA Trans. Signal Inf. Process."}
 @STRING{bjmcs = "Br. J. Math. \& Comput. Sci."}
 @STRING{bmj = "Br. Medical J."}
 @STRING{cas = "Comput. Appl. Softw."}
-@STRING{cg = "Centre de g\'eostatistique"} #
+@STRING{cg = "Centre de g{\'e}ostatistique"} #
 @STRING{cgeo = "Comput. Geosci."}
 @STRING{cgip = "Comput. Graph. Image Process."}
 @STRING{cis = "Complex \& Intell. Syst."}
@@ -718,7 +740,7 @@
 @STRING{ijabe = "Int. J. Agric. Biological Eng."}
 @STRING{ijapr = "Int. J. Appl. Pattern Recognit."}
 @STRING{ijars = "Int. J. Adv. Robot. Syst."}
-@STRING{ijat = "Int. J. Autom. Technol."}
+@STRING{ijat = "Int. J. Automot. Technol."}
 @STRING{ijca = "Int. J. Comput. Appl. (IJCA)"}
 @STRING{ijcv = "Int. J. Comput. Vis."}
 @STRING{ijcvr = "Int. J. Comput. Vis. Robot."}
@@ -747,7 +769,12 @@
 @STRING{isrr = "Int. Symp. Robot. Res. (ISRR)"}
 @STRING{issse = "Int. Symp. Signals, Syst. Electron."}
 @STRING{ivc = "Image Vis. Comput."}
-@STRING{kiitiis = "KSII Trans. Internet \& Inf. Syst."}
+@STRING{j-asbjar = "Appl. Sci. Biotechnol. J. Adv. Res."}
+@STRING{j-ams = "J. Am. Math. Soc."}
+@STRING{j-ijam = "IAENG Int. J. Appl. Math."}
+@STRING{j-jucs = "J. Univers. Comput. Sci."}
+@STRING{j-mcms = "J. Mech. Contin. Math. Sci."}
+@STRING{j-srt = "J. Sci. Res. Technol."}
 @STRING{jacm = "J. Assoc. Comput. Mach."}
 @STRING{jasa = "J. Acoust. Soc. Am."}
 @STRING{jca = "J. Comput. Appl."}
@@ -774,8 +801,10 @@
 @STRING{jtg = "J. Transp. Geogr."}
 @STRING{jvcir = "J. Vis. Commun. Image Represent."}
 @STRING{jwe = "J. Web Eng."}
+@STRING{kiitiis = "KSII Trans. Internet \& Inf. Syst."}
 @STRING{mathgeol = "Math. Geol."}
 @STRING{mdpi-as = "Appl. Sci."}
+@STRING{mdpi-mti = "Multimodal Technol. Interact."}
 @STRING{mdpi-rm = "Remote Sens."}
 @STRING{mnras = "Mon. Not. R. Astron. Soc."}
 @STRING{msj = "Mult. Scler. J."}
@@ -800,6 +829,7 @@
 @STRING{research-archive = "Res. Arch. Rising Sch."}
 @STRING{ras = "Robot. Auton. Syst."}
 @STRING{rpi = "PHOTO-INTERPRETATION"}
+@STRING{s-idshfdatvd = "Int. Driv. Symp. Hum. Factors Driv. Assessment, Train. Veh. Des."}
 @STRING{scid = "Sci. Data"}
 @STRING{scir = "Sci. Reports"}
 @STRING{scip = "Sci. Program."}
@@ -807,10 +837,10 @@
 @STRING{sp = "Signal Process."}
 @STRING{spe = "Sports Eng."}
 @STRING{sivp = "Signal, Image Video Process."}
-@STRING{spie = "Soc. Photo-Instrumentation Eng."}
 @STRING{tams = "Ann. Math. Stat."}
 @STRING{tjeecs = "Turk. J. Electr. Eng. \& Comput. Sci."}
 @STRING{trr-jtrb = "Transp. Res. Rec.: J. Transp. Res. Board"}
+@STRING{ttic = "TIU Trans. Intell. Comput. (TTIC)"}
 @STRING{tmi = "Math. Intell."}
 @STRING{tmlr = "Trans. Mach. Learn. Res."}
 @STRING{w3j = "World Wide Web J."}
@@ -819,6 +849,7 @@
 
 % ----------------------------------------------------
 % Series
+% ----------------------------------------------------
 @STRING{aisc   = "Adv. Intell. Syst. Comput."}
 @STRING{ainsc  = "Adv. Intell. Soft Comput."}
 @STRING{acvpr  = "Adv. Comput. Vis. Pattern Recognit."}
@@ -840,15 +871,14 @@
 @STRING{sbcs   = "Springerbriefs Comput. Sci."}
 @STRING{sci    = "Stud. Comput. Intell."}
 @STRING{sist   = "Smart Innov. Syst. Technol."}
+@STRING{tcs    = "Texts Comput. Sci."}
 @STRING{ust    = "Unmanned Syst. Technol."}
 
 
 % ----------------------------------------------------
-% Other Conferences
-@STRING{c-yac = "Youth Acad. Annu. Conf. Chin. Assoc. Autom. (YAC)"}
+% Single conferences
+% ----------------------------------------------------
 
-% Conferences whose name does not start with "c-"
-@STRING{aaai = "AAAI Conf. Artif. Intell."}
 @STRING{accv = "Asian Conf. Comput. Vis. (ACCV)"}
 @STRING{accvw = "Asian Conf. Comput. Vis. Work. (ACCV Work.)"}
 @STRING{accvw-awss = "Asian Conf. Comput. Vis. Work. (ACCV Work.) Int. Work. Ai-based All-weather Surveill. Syst. (AWSS)"}
@@ -859,26 +889,37 @@
 @STRING{cac = "Chin. Autom. Congr. (CAC)"}
 @STRING{caca = "China Autom. Congr. (CAC)"}
 @STRING{caip = "Comput. Anal. Images Patterns"}
+@STRING{c-acrl = "Annu. Conf. Robot. Learn."}
+@STRING{c-aes = "Int. Audio Eng. Soc. Conf. (AES)"}
+@STRING{c-ecis = "Eur. Conf. Inf. Syst. (ECIS)"}
+@STRING{c-hfesecam = "Hum. Factors Ergon. Soc. Eur. Chapter Annu. Meet."} 
+@STRING{c-iccs = "Int. Conf. Comput. Sci."}
+@STRING{c-pam-acl = "Proc. Annu. Meet. Assoc. Comput. Linguistics"}
+@STRING{c-pcnac-acl = "Proc. Conf. North Am. Chapter Assoc. Comput. Linguistics: Hum. Lang. Technol."}
+@STRING{c-scia = "Scand. Conf. Image Anal. (SCIA)"}
+@STRING{c-uai = "Conf. Uncertain. Artif. Intell. (UAI)"}
+@STRING{c-yac = "Youth Acad. Annu. Conf. Chin. Assoc. Autom. (YAC)"}
 @STRING{ccc = "Chin. Control Conf. (CCC)"}
 @STRING{cccrv = "Can. Conf. Comput. Robot. Vis."}
 @STRING{ccdc = "Chin. Control Decis. Conf. (CCDC)"}
 @STRING{ccrv = "Conf. Comput. Robot. Vis."}
-@STRING{c-hfesecam = "Hum. Factors Ergon. Soc. Eur. Chapter Annu. Meet."} 
 @STRING{cisp-bmei = "Int. Congr. Image Signal Process. Biomed. Eng. Informatics (CISP-BMEI)"}
 @STRING{crv = "Conf. Robot. Vis. (CRV)"}
 @STRING{cvip = "Int. Conf. Comput. Vis. Image Process. (CVIP)"}
 @STRING{cvww = "Comput. Vis. Winter Work. (CVWW)"}
-@STRING{dicta = "Digit. Image Comput.: Tech. Appl."}
+@STRING{dicta = "Digit. Image Comput. Tech. Appl."}
 @STRING{dsa = "Int. Conf. Dependable Syst. Their Appl. (DSA)"}
 @STRING{ecai = "Eur. Conf. Artif. Intell."}
 @STRING{ecti-con = "Int. Conf. Electr. Eng. Comput. Telecommun. Inf. Technol. (ECTI-CON)"}
 @STRING{ectrims = "Congr. Eur. Comm. Treat. Res. Mult. Scler. (ECTRIMS)"}
 @STRING{eccv = "Eur. Conf. Comput. Vis. (ECCV)"}
 @STRING{eccvw = "Eur. Conf. Comput. Vis. Work. (ECCV Work.)"}
+@STRING{ecis = "Eur. Conf. Inf. Syst. (ECIS)"}
 @STRING{esann = "Eur. Symp. Artif. Neural Networks Comput. Intell. Mach. Learn. (ESANN)"}
 @STRING{eusipco = "Eur. Signal Process. Conf. (EUSIPCO)"}
 @STRING{fcv = "Korea-japan Jt. Work. Front. Comput. Vis. (FCV)"}
 @STRING{hnicem = "Int. Conf. Humanoid, Nanotechnology, Inf. Technol. Commun. Control Environ. Manag. (HNICEM)"}
+@STRING{icai = "Int. Conf. Artif. Intell."}
 @STRING{icann = "Int. Conf. Artif. Neural Networks (ICANN)"}
 @STRING{icarcv = "Int. Conf. Control Autom. Robot. Vis. (ICARCV)"}
 @STRING{iccsp = "Int. Conf. Commun. Signal Process. (ICCSP)"}
@@ -907,6 +948,7 @@
 @STRING{icwet = "Int. Conf. \& Work. Emerg. Trends Technol. (ICWET)"}
 @STRING{ijcai = "Int. Jt. Conf. Artif. Intell. (IJCAI)"}
 @STRING{ismm = "Int. Symp. Math. Morhology (ISMM)"}
+@STRING{isace = "Int. Sports Anal. Conf. Exhib. (ISACE)"}
 @STRING{ismir = "Int. Soc. Music Inf. Retr. Conf. (ISMIR)"}
 @STRING{ivcnz = "Int. Conf. Image Vis. Comput. New Zealand (IVCNZ)"}
 @STRING{m2vip = "Int. Conf. Mechatronics Mach. Vis. Pr. (M2VIP)"}
@@ -914,18 +956,20 @@
 @STRING{mlda = "Work. Mach. Learn. Data Min. Sports Anal."}
 @STRING{mmsp = "Int. Work. Multimedia Signal Process. (MMSP)"}
 @STRING{mvip = "Int. Conf. Mach. Vis. Image Process. (MVIP)"}
+@STRING{mvipit = "Int. Conf. Mach. Vis. Image Process. Imaging Technol. (MVIPIT)"}
+@STRING{nacmc = "NASA Annu. Conf. Man. Control"}
 @STRING{nips = "Adv. Neural Inf. Process. Syst. (NeurIPS)"}
 @STRING{nipsw = "Adv. Neural Inf. Process. Syst. (NeurIPS) Work."}
+@STRING{p-isprs = "Proc. ISPRS Comm. V Symp. Image Eng. Vis. Metrol."}
 @STRING{pmlr = "Proc. Mach. Learn. Res."}
 @STRING{prai = "Int. Conf. Pattern Recognit. Artif. Intell. (PRAI)"}
-@STRING{pspie = "Proc. SPIE"}
 @STRING{sbmi = "Int. Conf. Image Anal. Process. (ICIAP), Work. Scene Backgr. Model. Initial. (SBMI)"}
-@STRING{scia = "Scand. Conf. Image Anal. (SCIA)"}
 @STRING{ssc = "Asilomar Conf. Signals, Syst. Comput."}
 @STRING{taros = "Towar. Auton. Robot. Syst. (TAROS)"}
 @STRING{threedv = "Int. Conf. 3D Vis. (3DV)"}
 @STRING{visapp = "Int. Conf. Comput. Vis. Theory Appl. (VISAPP)"}
 @STRING{visigrapp = "Comput. Vis. Imaging Comput. Graph. Theory Appl. (VISIGRAPP)"}
+@STRING{visita-con-wa = "FISITA World Automot. Congr."}
 @STRING{wmva = "IAPR Work. Mach. Vis. Appl. (MVA)"}
 
 % ----------------------------------------------------
@@ -944,80 +988,25 @@
 @STRING{publisher-cshl = "Cold Spring Harb. Lab."}
 @STRING{publisher-curran = "Curran Assoc. Inc."}
 @STRING{publisher-ellipse = "Ellipses Mark."}
-@STRING{publisher-ieee = "Inst. Electr. Electron. Eng. (IEEE)"}
 @STRING{publisher-iee = "Inst. Electr. Eng."}
-@STRING{publisher-iop = "IOP Publ."}
+@STRING{publisher-isprs = "Int. Soc. Photogramm. Remote Sens. (ISPRS)"}
 @STRING{publisher-itp = "Int. Thomson Publ."}
 @STRING{publisher-kluwer = "Kluwer Acad. Publ."}
 @STRING{publisher-macmillan = "Macmillan Tech. Publ."}
-@STRING{publisher-mdpi = "MDPI"}
-@STRING{publisher-mdpiag = "MDPI AG"}
 @STRING{publisher-mgh = "McGraw-Hill"}
 @STRING{publisher-morgan = "Morgan Kauffmann Publ. Inc."}
 @STRING{publisher-morgan-claypool = "Morgan \& Claypool"}
+@STRING{publihser-morgan-short = "Morgan Kauffmann"}
 @STRING{publisher-mtp = "Macmillan Tech. Press"}
-@STRING{publisher-now = "Now Publ."}
+@STRING{publisher-nasa = "National Aeronaut. Space Adm. (NASA)"}
 @STRING{publisher-oreilly = "O'Reilly \& Assoc."}
 @STRING{publisher-peregrinus = "Peter Peregrinus Ltd."}
 @STRING{publisher-plos = "Public Libr. Sci. (plos)"}
 @STRING{publisher-prentice = "Prentice Hall"}
-@STRING{publisher-spie = "SPIE"}
-@STRING{publisher-springer = "Springer"}
-@STRING{publisher-springerbh = "Springer Berl. Heidelb."}
-@STRING{publisher-springerip = "Springer Int. Publ."}
-@STRING{publisher-springerl = "Springer Lond."}
-@STRING{publisher-springers = "Springer Singap."}
-@STRING{publisher-springersbm = "Springer Sci. Bus. Media LLC"}
-@STRING{publisher-springersn = "Springer Nat. Singap."}
-@STRING{publisher-springerswiss = "Springer Nat. Switz."}
 @STRING{publisher-tandf = "Taylor \& Francis"}
-@STRING{publisher-tsp = "Comput. Mater. Contin. (tech Sci. Press."}
+@STRING{publisher-tsp = "Comput. Mater. Contin. ( Tech Sci. Press."}
 @STRING{publisher-vnr = "Van Nostrand Reinhold"}
-
-% OLD ENTRIES
-@STRING{aaspublisher = "Am. Astron. Soc."}
-@STRING{academic = "Acad. Press"}
-@STRING{acm = "ACM Press"}
-@STRING{acmlong = "Assoc. Comput. Mach."}
-@STRING{addison = "Addison-Wesley"}
-@STRING{atlantis = "Atl. Press"}
-@STRING{brooks = "Brooks/Cole Publ. Co."}
-@STRING{cambridge = "Camb. Univ. Press"}
-@STRING{chap = "Chapman \& Hall"}
-@STRING{chapman = "Chapman \& Hall"}
-@STRING{cshl = "Cold Spring Harb. Lab."}
-@STRING{curran = "Curran Assoc. Inc."}
-@STRING{ellipse = "Ellipses Mark."}
-@STRING{frontierssa = "Front. Media SA"}
-@STRING{ieee = "Inst. Electr. Electron. Eng. (IEEE)"}
-@STRING{IEE = "Inst. Electr. Eng."}
-@STRING{iet = "Inst. Eng. Technol. (IET)"}
-@STRING{iop = "IOP Publ."}
-@STRING{itp = "Int. Thomson Publ."}
-@STRING{kluwer = "Kluwer Acad. Publ."}
-@STRING{macmillan = "Macmillan Tech. Publ."}
-@STRING{mdpi = "MDPI"}
-@STRING{mdpiag = "MDPI AG"}
-@STRING{mgh = "McGraw-Hill"}
-@STRING{mit = "MIT Press"}
-@STRING{morgan = "Morgan Kauffmann"}
-@STRING{morgan-claypool = "Morgan \& Claypool"}
-@STRING{mtp = "Macmillan Tech. Press"}
-@STRING{now = "Now Publ."}
-@STRING{oreilly = "O'Reilly \& Assoc."}
-@STRING{peregrinus = "Peter Peregrinus Ltd."}
-@STRING{prentice = "Prentice Hall"}
-@STRING{springer = "Springer"}
-@STRING{springerip = "Springer Int. Publ."}
-@STRING{springerl = "Springer Lond."}
-@STRING{springers = "Springer Singap."}
-@STRING{springersbm = "Springer Sci. Bus. Media LLC"}
-@STRING{springersn = "Springer Nat. Singap."}
-@STRING{springerswiss = "Springer Nat. Switz."}
-@STRING{tandf = "Taylor \& Francis"}
-@STRING{vnr = "Van Nostrand Reinhold"}
-@STRING{walterdg = "Walter De Gruyter Gmbh"}
-@STRING{wiley = "John Wiley \& Sons"}
+@STRING{publisher-walterdg = "Walter De Gruyter Gmbh"}
 
 % ----------------------------------------------------
 % Related to specific countries, cities, etc.
@@ -1035,49 +1024,38 @@
 @STRING{institute-iiite = "Inst. Image Inf. Telev. Eng."}
 
 % Laboratories
-@STRING{laboratory-cmm = "Centre de morphologie math\'ematique"} #
+@STRING{laboratory-cmm = "Centre de morphologie math{\'e}matique"} #
 @STRING{laboratory-cwi = "Centrum voor Wiskunde and Informatica"} #
-@STRING{laboratory-emp = "\'Ecole des Mines de Paris"} #
-@STRING{laboratory-emp-cmm = "\'Ecole des mines de Paris, Centre de morphologie math\'{e}matique"} #
-@STRING{laboratory-ensmp = "\'Ecole nationale sup\'erieure des mines de Paris"} #
-@STRING{laboratory-epfl-igr = "\'Ecole Polytechnique de Lausanne, Institut de G\'{e}nie Rural"} #
+@STRING{laboratory-emp = "{\'E}cole des Mines de Paris"} #
+@STRING{laboratory-emp-cmm = "{\'E}cole des mines de Paris, Centre de morphologie math\'{e}matique"} #
+@STRING{laboratory-ensmp = "{\'E}cole nationale sup\'erieure des mines de Paris"} #
+@STRING{laboratory-epfl-igr = "{\'E}cole Polytechnique de Lausanne, Institut de G{\'e}nie Rural"} #
 
 % Universities
+@STRING{university-ghent = "Ghent Univ. Belg."}
 @STRING{university-kth = "KTH R. Inst. Technol. Swed."}
 @STRING{university-leiden = "Univ. Leiden, Neth."}
-@STRING{university-ucl = "Universit\'e catholique de Louvain"} #
-@STRING{university-uclanglais = "Cathol. Univ. Louvain"}
-@STRING{university-ulg = "University of Li\`ege, Belgium"} #
-
-% OLD ENTRIES
-@STRING{cmm = "Centre de morphologie math\'ematique"} #
-@STRING{cwi = "Centrum voor Wiskunde and Informatica"} #
-@STRING{emp = "\'Ecole des Mines de Paris"} #
-@STRING{emp-cmm = "\'Ecole des mines de Paris, Centre de morphologie math\'{e}matique"} #
-@STRING{ensmp = "\'Ecole nationale sup\'erieure des mines de Paris"} #
-@STRING{epfl-igr = "\'Ecole Polytechnique de Lausanne, Institut de G\'{e}nie Rural"} #
-@STRING{nhtsa-abb = "NHTSA"} #
-@STRING{nhtsa = "National Highw. Traffic Saf. Adm."}
-@STRING{paho-abb = "PAHO"} #
-@STRING{paho = "Pan Am. Heal. Organ."}
-@STRING{ucl = "Universit\'e catholique de Louvain"} #
-@STRING{uclanglais = "Cathol. Univ. Louvain"}
-@STRING{ulg = "University of Li\`ege, Belgium"} #
-@STRING{who-abb = "WHO"}
-@STRING{who = "World Heal. Organ."}
+@STRING{university-ucl = "Cathol. Univ. Louvain, Belg."}
+@STRING{university-uclfrench = "Universit{\'e} catholique de Louvain, Belgique"} #
+@STRING{university-ulg = "University of Li{\`e}ge, Belgium"} #
+@STRING{university-upc = "Polytech. Univ. Catalonia (UPC), Spain"}
 
 % Cities
 @STRING{city-abudhabi = "Abu Dhabi, United Arab. Emir."}
 @STRING{city-anchorage = "Anchorage, AK, USA"}
-@STRING{city-atlanta = "Atlanta, Georgia, USA"}
+@STRING{city-atlanta = "Atlanta, GA, USA"}
 @STRING{city-barcelona = "Barcelona, Spain"}
 @STRING{city-boston = "Boston, MA, USA"}
+@STRING{city-brisbane = "Brisbane, Aust."}
 @STRING{city-brussels = "Brussels, Belg."}
 @STRING{city-cambridge = "Cambridge, MA, USA"}
 @STRING{city-chicago = "Chicago, IL, USA"}
 @STRING{city-columbus = "Columbus, OH, USA"}
+@STRING{city-corvalis = "Corvalis, OR, USA"}
 @STRING{city-dallas = "Dallas, TX, USA"}
 @STRING{city-denver = "Denver, CO, USA"}
+@STRING{city-edingburgh = "Edinburgh, Scotl."}
+@STRING{city-eindhoven = "Eindhoven, Neth."}
 @STRING{city-greenville = "Greenville, SC, USA"}
 @STRING{city-hongkong = "Hong Kong, China"}
 @STRING{city-honolulu = "Honolulu, HI, USA"}
@@ -1092,15 +1070,21 @@
 @STRING{city-miami = "Miami, FL, USA"}
 @STRING{city-milan = "Milan, Italy"}
 @STRING{city-minneapolis = "Minneapolis, MN, USA"}
-@STRING{city-mountainview = "Mountain View, CA, USA"}
 @STRING{city-montreal = "Montr{\'e}al, Can."}
-@STRING{city-niagarafalls = "Niagara Falls, Ontario, Can."},
+@STRING{city-mountainview = "Mountain View, CA, USA"}
+@STRING{city-mountpleasant = "Mount Pleasant, MI, USA"}
 @STRING{city-nashville = "Nashville, TN, USA"}
+@STRING{city-newhaven = "New Haven, CT, USA"}
 @STRING{city-neworleans = "New Orleans, LA, USA"}
 @STRING{city-newyork = "New York City, NY, USA"}
+@STRING{city-niagarafalls = "Niagara Falls, Ontario, Can."},
+@STRING{city-orlando = "Orlando, FL, USA"}
 @STRING{city-ottawa = "Ottawa, Ontario, Can."}
 @STRING{city-paris = "Paris, Fr."}
+@STRING{city-portland = "Portland, OR, USA"}
 @STRING{city-philadelphia = "Philadelphia, PA, USA"}
+@STRING{city-pittsburgh = "Pittsburgh, PA, USA"}
+@STRING{city-princeton = "Princeton, NJ, USA"}
 @STRING{city-providence = "Providence, RI, USA"}
 @STRING{city-reykjavik = "Reykjavík, Icel."}
 @STRING{city-saltlake = "Salt Lake City, UT, USA"}
@@ -1115,69 +1099,40 @@
 @STRING{city-sydney = "Sydney, NSW, Aust."}
 @STRING{city-telaviv = "Tel Aviv, Isra{\"e}l"}
 @STRING{city-toronto = "Toronto, Ontario, Can."}
-@STRING{city-tucson = "Tucson, Ariz. USA"}
+@STRING{city-tucson = "Tucson, AZ, USA"}
 @STRING{city-vancouver = "Vancouver, Can."}
 @STRING{city-waikoloa = "Waikoloa, HI, USA"}
 @STRING{city-washington = "Washington, DC, USA"}
-@STRING{city-westlafayette = "West Lafayette, Indiana, USA"}
-
-% OLD ENTRIES
-@STRING{anchorage = "Anchorage, AK, USA"}
-@STRING{boston = "Boston, MA, USA"}
-@STRING{chicago = "Chicago, IL, USA"}
-@STRING{columbus = "Columbus, OH, USA"}
-@STRING{dallas = "Dallas, TX, USA"}
-@STRING{honolulu = "Honolulu, HI, USA"}
-@STRING{lasvegas = "Las Vegas, NV, USA"}
-@STRING{lisbon = "Lisbon, Port."}
-@STRING{london = "London, Engl."}
-@STRING{losangeles = "Los Angeles, CA, USA"}
-@STRING{montreal = "Montr{\'e}al, Can."}
-@STRING{nashville = "Nashville, TN, USA"}
-@STRING{neworleans = "New Orleans, LA, USA"}
-@STRING{newyork = "New York City, NY, USA"}
-@STRING{paris = "Paris, Fr."}
-@STRING{philadelphia = "Philadelphia, PA, USA"}
-@STRING{providence = "Providence, RI, USA"}
-@STRING{saltlake = "Salt Lake City, UT, USA"}
-@STRING{sandiego = "San Diego, CA, USA"}
-@STRING{sanfrancisco = "San Francisco, CA, USA"}
-@STRING{sanjose = "San Jose, CA, USA"}
-@STRING{santaclara = "Santa Clara, CA, USA"}
-@STRING{seattle = "Seattle, WA, USA"}
-@STRING{snowmass = "Snowmass, CO, USA"}
-@STRING{toronto = "Toronto, Ontario, Can."}
-@STRING{waikoloa = "Waikoloa, HI, USA"}
-@STRING{washington = "Washington, DC, USA"}
+@STRING{city-westlafayette = "West Lafayette, IN, USA"}
 
 % ----------------------------------------------------
 % "Utility" macros
 % ----------------------------------------------------
 % Months in English 
-@STRING{Jan = "Jan."}
+% @STRING{Jan = "Jan."}
 @STRING{Jan-Feb = "Jan.-Feb."}
-@STRING{Feb = "Feb."}
+% STRING{Feb = "February"}
 @STRING{Feb-Mar = "Feb.-Mar."}
-@STRING{Mar = "Mar."}
+% @STRING{Mar = "Mar."}
 @STRING{Mar-Apr = "Mar.-Apr."}
-@STRING{Apr = "Apr."}
+% @STRING{Apr = "Apr."}
 @STRING{Apr-May = "Apr.-May"}
 @STRING{Apr-Jun = "Apr.-Jun."}
-@STRING{May = "May"}
+% @STRING{May = "May"}
 @STRING{May-Jun = "May-Jun."}
-@STRING{Jun = "Jun."}
+% @STRING{Jun = "Jun."}
 @STRING{Jun-Jul = "Jun.-Jul."}
-@STRING{Jul = "Jul."}
+% @STRING{Jul = "Jul."}
 @STRING{Jul-Aug = "Jul.-Aug."}
-@STRING{Aug = "Aug."}
+% @STRING{Aug = "Aug."}
 @STRING{Aug-Sep = "Aug.-Sept."}
-@STRING{Sep = "Sept."}
+% @STRING{Sep = "Sept."}
 @STRING{Sep-Oct = "Sept.-Oct."}
-@STRING{Oct = "Oct."}
+% @STRING{Oct = "Oct."}
 @STRING{Oct-Nov = "Oct.-Nov."}
-@STRING{Nov = "Nov."}
+% @STRING{Nov = "Nov."}
 @STRING{Nov-Dec = "Nov.-Dec."}
-@STRING{Dec = "Dec."}
+% @STRING{Dec = "Dec."}
 
 % Editions
 @STRING{editionone = "1st"}
