@@ -26,20 +26,38 @@ abbreviations = {
     "Association Nationale de la Recherche Technique" : "Association Nationale de la Recherche Technique",
     "Brooks/Cole Publishing Company" : "Brooks/Cole Publ. Co.",
     "O'Reilly \& Associates" : "O'Reilly \& Assoc.",
+    ", Alabama," : ", AL,",
     ", Alaska," : ", AK,",
-    ", Colorado," : ", CO,",
+    ", Arkansas," : ", AR,",
+    ", Arizona," : ", AZ,",
     ", California," : ", CA,",
+    ", Colorado," : ", CO,",
+    ", Connecticut," : ", CT,",
     ", District of Columbia," : ", DC,",
     ", Florida," : ", FL,",
+    ", Georgia," : ", GA,",
     ", Hawaii," : ", HI,",
     ", Illinois," : ", IL,",
+    ", Indiana," : ", IN,",
+    ", Iowa," : ", IA,",
+    ", Kansas," : ", KS,",
     ", Louisiana," : ", LA,",
+    ", Maryland," : ", MD,",
     ", Massachusetts," : ", MA,",
+    ", Michigan," : ", MI,",
+    ", Minnesota," : ", MN,",
+    ", Mississippi," : ", MS,",
+    ", Missouri," : ", MO,",
+    ", Montana," : ", MT,",
     ", Nevada," : ", NV,",
-    ", Ohio," : ", OH,",
+    ", New Jersey," : ", NJ,",
     ", New York," : ", NY,",
+    ", Ohio," : ", OH,",
+    ", Oklahoma," : ", OK,",
+    ", Oregon," : ", OR,",
     ", Pennsylvania," : ", PA,",
     ", Rhode Island," : ", RI,",
+    ", South Carolina," : ", SC,",
     ", Tennessee," : ", TN,",
     ", Texas," : ", TX,",
     ", Utah," : ", UT,",
@@ -119,9 +137,9 @@ def journal_abbrev(name, data):
     n_abbrev = []
 
     (name1, _, name2) = name.partition(": ")
-    parts = re.split("\s+", name1)
+    parts = re.split(r"\s+", name1)
     if len(name2) >= 1:
-        parts2 = re.split("\s+", name2)
+        parts2 = re.split(r"\s+", name2)
         parts = parts + [":"] + parts2
 
     if len(parts) == 1 and len(parts[0]) < 12:
@@ -209,6 +227,8 @@ def journal_abbrev(name, data):
         str = str.replace("mmsports", "MMSports")
     if "neurips" in str: 
         str = str.replace("neurips", "NeurIPS")
+    if "automotiveui" in str: 
+        str = str.replace("automotiveui", "AutomotiveUI")
     if "" in str: 
         str = str.replace("", "")
 

@@ -35,18 +35,21 @@ switcher = {
      2013: 'Portland, OR, USA',
      2014: 'colombus',
      2015: 'boston',
-     2016: 'lasvegas',
-     2017: 'honolulu',
-     2018: 'saltlake',
-     2019: 'longbeach',
-     2020: 'seattle',
-     2021: 'nashville',
-     2022: 'neworleans'
+     2016: 'city-lasvegas',
+     2017: 'city-honolulu',
+     2018: 'city-saltlake',
+     2019: 'city-longbeach',
+     2020: 'city-seattle',
+     2021: 'city-nashville',
+     2022: 'city-neworleans',
+     2023: 'city-vancouver',
+     2024: 'city-seattle',
+     2025: 'city-nashville'
 }
 
 acronyms = ['IoT']
 cities = ['Brussels', 'Oxford']
-countries  = ['American', 'Belgium', 'China', 'Chinese', 'Europe', 'France', 'United States']
+countries  = ['American', 'Belgium', 'China', 'Chinese', 'Europe', 'France', 'Japan', 'Korea', 'United States']
 names = ['Bernoulli', 'Carlo', 'Fourier', 'Gaussian', 'Gemini', 'Haar', 'Hough', 'Laplace', 'Laplacian', 'Markov', 'Minkowski', 'Monte', 'Shannon', 'Viterbi']
 multid = ['2D', '2-D', '2D/3D', '3D', '3-D']
 algorithm = ['Vibe', 'ITS', 'Yolo']
@@ -76,9 +79,22 @@ from bibtexparser.customization import homogenize_latex_encoding
 # To calculate the distance between strings
 import Levenshtein as lev
 
-# Experimental
+# ------- Experimental ----
 # Try to count the number of pages from online PDF document
 import PyPDF2, io
+
+# ------- Experimental ----
+# Try to follow DOIs to corresponding https web page and get around anti script measures
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+from bs4 import BeautifulSoup
+
+import time
 
 # -------------------------------------------------------------------------
 # For debugging
@@ -242,7 +258,7 @@ def journal_abbrev(name):
     n_abbrev = []
 
     (name, _, _) = name.partition(":")
-    parts = re.split("\s+", name)
+    parts = re.split(r"\s+", name)
 
     if len(parts) == 1 and len(parts[0]) < 12:
         return name
@@ -293,6 +309,77 @@ def getContentFromURL(url):
     charset=u.info().get_content_charset()
     return u.read().decode(charset)
 
+# Alternative specific to MDPI
+def get_fulltext_pdf_url_from_doi(doi_url):
+    # Setup headless Chrome options
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+
+    # Initialize WebDriver
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+    try:
+        driver.get(doi_url)
+
+        # Wait for page to load completely (max 15 seconds)
+        WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((By.TAG_NAME, "head"))
+        )
+
+        # Get page source after redirection
+        page_source = driver.page_source
+
+        # Use BeautifulSoup to parse page content
+        soup = BeautifulSoup(page_source, "html.parser")
+
+        # Find the <meta name="fulltext_pdf" content="..."> tag
+        meta_tag = soup.find("meta", attrs={"name": "fulltext_pdf"})
+
+        if meta_tag and meta_tag.has_attr("content"):
+            return meta_tag["content"]
+        else:
+            return None
+    finally:
+        driver.quit()
+
+# Solution specific to MDPI
+def get_pdf_page_count(pdf_url):
+    printDEBUG(1, "Get the number of page of the following PDF document : " + pdf_url) 
+    download_dir = os.path.abspath("selenium_download")
+    os.makedirs(download_dir, exist_ok=True)
+
+    # Clear previous downloads
+    for f in os.listdir(download_dir):
+        os.remove(os.path.join(download_dir, f))
+
+    # Setup Chrome options for PDF download
+    options = Options()
+    options.add_experimental_option('prefs', {
+        "download.default_directory": download_dir,
+        "download.prompt_for_download": False,
+        "plugins.always_open_pdf_externally": True
+    })
+    options.add_argument("--headless")  # Remove if you want to see the browser
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+    driver.get(pdf_url)
+    time.sleep(10)  # wait for download to complete
+    driver.quit()
+
+    # Find downloaded PDF
+    pdf_files = [f for f in os.listdir(download_dir) if f.endswith('.pdf')]
+    if not pdf_files:
+        raise FileNotFoundError("No PDF downloaded")
+
+    pdf_path = os.path.join(download_dir, pdf_files[0])
+
+    with open(pdf_path, 'rb') as f:
+        reader = PyPDF2.PdfReader(f)
+        return len(reader.pages)
+
 
 # -------------------------------------------------------------------------
 # Functions to "correct" crossref entries for specific editors
@@ -321,15 +408,6 @@ def handle_bioRxiv(entry):
     entry['publisher'] = "Cold Spring Harbor Laboratory"
     return entry
 
-def handle_PsyArXiv(entry):
-    printDEBUG(1, "PsyArXiv entry")
-    entry['ID'] = entry['ID'] + "-psyarxiv"
-    entry['ENTRYTYPE'] = "article"
-    entry['journal'] = "psyarxiv"
-    entry['keywords'] = ''
-    entry['eprinttype'] = "PsyArXiv"
-    return entry
-
 def handle_PREPRINT(entry):
     printDEBUG(1, "PREPRINT entry")
     entry['ID'] = entry['ID'] + "-preprint"
@@ -339,15 +417,6 @@ def handle_PREPRINT(entry):
     entry['eprinttype'] = "PREPRINT"
     return entry
 
-def handle_ssrn(entry):
-    printDEBUG(1, "SSRN entry")
-    entry['ID'] = entry['ID'] + "-ssrn"
-    entry['ENTRYTYPE'] = "article"
-    entry['journal'] = "ssrn"
-    entry['keywords'] = ''
-    entry['eprinttype'] = "SSRN"
-    return entry
-
 def handle_preprintMDPI(entry):
     printDEBUG(1, "Preprint entry")
     entry['ID'] = entry['ID'] + "-preprint"
@@ -355,6 +424,24 @@ def handle_preprintMDPI(entry):
     entry['journal'] = "Preprint"
     entry['keywords'] = ''
     entry['eprinttype'] = "Preprint"
+    return entry
+
+def handle_PsyArXiv(entry):
+    printDEBUG(1, "PsyArXiv entry")
+    entry['ID'] = entry['ID'] + "-psyarxiv"
+    entry['ENTRYTYPE'] = "article"
+    entry['journal'] = "psyarxiv"
+    entry['keywords'] = ''
+    entry['eprinttype'] = "PsyArXiv"
+    return entry
+
+def handle_ssrn(entry):
+    printDEBUG(1, "SSRN entry")
+    entry['ID'] = entry['ID'] + "-ssrn"
+    entry['ENTRYTYPE'] = "article"
+    entry['journal'] = "ssrn"
+    entry['keywords'] = ''
+    entry['eprinttype'] = "SSRN"
     return entry
 
 def handle_TechRxiv(entry):
@@ -375,13 +462,28 @@ def handle_research_archive(entry):
     entry['eprinttype'] = "Research Archive of Rising Scholars"
     return entry
 
+def handle_zenodo(entry):
+    printDEBUG(1, "Zenodo entry")
+    entry['ID'] = entry['ID'] + "-zenodo"
+    entry['ENTRYTYPE'] = "article"
+    entry['journal'] = "Zenodo"
+    entry['keywords'] = ''
+    entry['eprinttype'] = "zenodo"
+    entry['publisher'] = "Zenodo"
+    return entry
+
 def handle_MDPI(entry):
     printDEBUG(1, "\nThis is a paper by the MDPI editor: try to find the number of pages")
-    page = getContentFromURL(entry['url'])
-    pdf_link = re.search(r'pdf_url" content="(.+)"', page)
-    printDEBUG(1, "\tFound PDF link = " + pdf_link[1])
-    response = requests.get(pdf_link[1])
-    num_pages = len(PyPDF2.PdfReader(io.BytesIO(response.content)).pages)
+    printDEBUG(1, "\tFecthing " + entry['url'])
+    # page = getContentFromURL(entry['url'])
+    # pdf_link = re.search(r'pdf_url" content="(.+)"', page)
+    # printDEBUG(1, "\tFound PDF link = " + pdf_link[1])
+    # response = requests.get(pdf_link[1])
+    # num_pages = len(PyPDF2.PdfReader(io.BytesIO(response.content)).pages)
+    num_pages = -1
+    pdf_link = get_fulltext_pdf_url_from_doi(entry['url'])
+    printDEBUG(1, "\tFound PDF link = " + pdf_link)
+    num_pages = get_pdf_page_count(pdf_link)
 
     # Finally write the page count if any
     if num_pages > 0:
@@ -508,8 +610,8 @@ def get_entry(doi):
         else: 
             oldkey = str(entry['ID'])
             # Some title cleaning
-            entry['title'] = entry['title'].replace("\{",'')
-            entry['title'] = entry['title'].replace("\}",'')
+            entry['title'] = entry['title'].replace("{",'')
+            entry['title'] = entry['title'].replace("}",'')
             entry['title'] = entry['title'].replace("\\textendash ",'-')
             entry['title'] = entry['title'].replace("\\textendash",'-')
             entry['title'] = entry['title'].replace("\\textemdash",' --- ')
@@ -533,16 +635,21 @@ def get_entry(doi):
             newKey = newKey.replace(',','')
             newKey = newKey.replace('-','')
             newKey = newKey.replace('’','')
+            newKey = newKey.replace('\"','')
             newKey = newKey.replace('\'','')
             newKey = newKey.replace("{\\a}",'a')
             newKey = newKey.replace("{\\`a}",'a')
             newKey = newKey.replace("{\\aa}",'a')
             newKey = newKey.replace("{\\c}",'c')
+            newKey = newKey.replace("{\\cc}",'c')
             newKey = newKey.replace("{\\e}",'e')
             newKey = newKey.replace("{\\'e}",'e')
             newKey = newKey.replace("{\\`e}",'e')
-            newKey = newKey.replace('{\\"u}','u')
             newKey = newKey.replace('{\\"o}','o')
+            newKey = newKey.replace('{\\o}','o')
+            newKey = newKey.replace('{\\u}','u')
+            newKey = newKey.replace('\\U','U')
+            newKey = newKey.replace('{\\vc}','c')
             # firstline = firstline.replace(oldkey, newKey) 
             # content = content + [firstline]
             printDEBUG(1, "Replacing ID key " + oldkey + " by " + newKey)
@@ -610,7 +717,7 @@ def get_entry(doi):
 
         # Add {} around uppercases that are not at the beginning of a word
         # for item in re.findall('\w+[A-Z]+\w+|[A-Z][A-Z]+|\w+\-\w+\-[A-Z]\w+|\w+\-[A-Z]+\w+', entry['title']):
-        for item in re.findall('\w+[A-Z]+\w+|[A-Z][A-Z]+', entry['title']):
+        for item in re.findall(r'\w+[A-Z]+\w+|[A-Z][A-Z]+', entry['title']):
              entry['title'] = entry['title'].replace(item,"{" + item + "}")
         # Remove some of the useless keys
         if 'abstractnote' in entry.keys():    
@@ -826,10 +933,6 @@ def get_entry(doi):
         if entry['doi'].find("10.1101/") > -1:  # bioRxiv
             entry = handle_bioRxiv(entry)
 
-        # Check for a Psy-arXiv document 
-        if entry['doi'].find("10.31234/") > -1:  # Psy-arXiv
-            entry = handle_PsyArXiv(entry)
-
         # Check for a Research Archive of Rising Scholars document 
         if entry['doi'].find("10.58445/") > -1:  #  research_archive
             entry = handle_research_archive(entry)
@@ -838,17 +941,25 @@ def get_entry(doi):
         if entry['doi'].find("10.21203/") > -1:  # Research Square
             entry = handle_PREPRINT(entry)
 
-        # Check for a SSRN (Social Science Research Network)
-        if entry['doi'].find("10.2139/") > -1:  # SSRN
-            entry = handle_ssrn(entry)
-
         # Check for a MDPI preprint document 
         if entry['doi'].find("10.20944/") > -1:  # MDPI preprint
             entry = handle_preprintMDPI(entry)
 
+        # Check for a Psy-arXiv document 
+        if entry['doi'].find("10.31234/") > -1:  # Psy-arXiv
+            entry = handle_PsyArXiv(entry)
+
+        # Check for a SSRN (Social Science Research Network)
+        if entry['doi'].find("10.2139/") > -1:  # SSRN
+            entry = handle_ssrn(entry)
+
         # Check for a TechRxiv document
         if entry['doi'].find("10.36227/") > -1:  # TechRxiv
             entry = handle_TechRxiv(entry)
+
+        # Check for a Zenodo
+        if entry['doi'].find("10.5281/") > -1:  # Zenodo
+            entry = handle_zenodo(entry)
 
         # Put a checkpoint
         get_linenumber() 
@@ -1046,10 +1157,10 @@ def get_entry(doi):
              bibtex_str = bibtex_str.replace(titleLine, newTitleLine) 
         
         # Dedicated editing
-        bibtex_str = bibtex_str.replace('{IEEE}', "ieee") 
+        # bibtex_str = bibtex_str.replace('{IEEE}', "publisher-ieee") 
 
 	# Remove the last \n character
-        bibtex_str = bibtex_str[:-1]
+        # bibtex_str = bibtex_str[:-1]
 
         return bibtex_str
         # return "\n".join(lines)
