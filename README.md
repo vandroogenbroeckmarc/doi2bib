@@ -29,6 +29,7 @@
 This "doi2bib" version was initially *tuned* for the scientific domains of electrical engineering and computer sciences, but should work for many other domains as well --if only NIPS and ICLR were using DOIs as well... 
 To help improving the consistency of references, there is a list of abbreviations named [abbreviation.bib](bib/abbreviation.bib) (with his companion's file of short abbreviations [abbreviation-short.bib](bib/abbreviation-short.bib)) that will automatically be substituted if detected. 
 For that you need to inform doi2bib of the availability of [abbreviation.bib](bib/abbreviation.bib). 
+Note that the current version (September 2025) of [abbreviation.bib](bib/abbreviation.bib) are been revised quite intensively: abbreviated names are beginning to follow a pattern. 
 
 For linux and MacOSX systems, the steps to follow are:
 
@@ -123,14 +124,14 @@ to be compared to what is given by doi2bib
 > }
 
 
-Finally, so useful doi or url fields are useful but not provided by scholar.  
+Finally, so useful doi or url fields are not provided by scholar.  
 
 (2) Handling macro strings is not done by "commercial" BiBTeX generators. However, macros help guaranteeing some consistency between references and also allow to replace “long” versions of strings (like "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)") by their shorter versions ("IEEE/CVF Conf. Comput. Vis. and Pattern Recogn. (CVPR)”). 
 
 ### Current version and future plans
 
-The version of October 2024 fixes some bugs and extends some functionalities. 
-Obviously, the main plan is to allow a kind-of _pip3 install this_package_. Unfortunately, the doi2bib is already used by another package. So, I still need to find a workaround. I will, so stay tuned.
+The version of September 2025 fixes some bugs and extends some functionalities. 
+Obviously, the main plan is to allow a kind-of _pip3 install this_package_. Unfortunately, the doi2bib is already used by another package. So, I still need to find a workaround. 
 
 ## Use at your own risks... 
 
