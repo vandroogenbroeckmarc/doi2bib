@@ -1,4 +1,4 @@
-# doibib : yet another tool to generate a BiBTeX entry based on a DOI
+# doi2bib : yet another tool to generate a BiBTeX entry based on a DOI
 
 ## Features of this package:
 - corrects misformed crossref fields given a DOI.
