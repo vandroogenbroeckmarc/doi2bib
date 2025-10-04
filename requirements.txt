@@ -1,5 +1,7 @@
-bibtexparser==1.2.0
+bibtexparser==1.4.3
+python_Levenshtein==0.27.1
 PyPDF2==3.0.1
-python_Levenshtein==0.20.9
-requests==2.27.1
+selenium==4.35.0
+webdriver_manager==4.0.2
 requests-html==0.10.0
+lxml_html_clean==0.4.2
