@@ -6,13 +6,15 @@
 - substitutes journal/proceedings names by a _STRING_ macro if available, and suggests a short abbreviation otherwise.
 - transforms unicode characters (utf-8) into ASCII 7 bits characters.
 - handles capitalized letters in the title (whenever possible).
-- guesses page numbers automatically when the web page mentions it or when the PDF is publicly available.
+- guesses page numbers automatically when the web page mentions it or when the PDF is publicly available. 
 - offers the possibility to switch from long names to short names (for journal or proceedings that have a _STRING_ macro).
 - works for many publishers, including preprints (arXiv, PsyArXiv, bioRxiv).
+- doi2bib https://arxiv.org/abs/2505.19175 now works directly, despite it is not a valid DOI!
 
 ## Examples on how to use it 
 
 > doi2bib 10.1109/TIP.2010.2101613  _(simple usage)_ <br>
+> doi2bib https://arxiv.org/abs/2505.19175 _(simple usage for an arXiv link)_ <br>
 > doi2bib -v 10.1109/CVPR42600.2020.01314  _(simple usage, moderate verbosity)_ <br>
 > doi2bib -vv https://doi.org/10.1145/3552437.3558545 _(with the complete URL, verbose mode)_ <br>
 
@@ -35,7 +37,9 @@ For linux and MacOSX systems, the steps to follow are:
 
 - edit your ".zshrc" ou ".bashrc" file (adapt this to your favorite shell if you use another one; to find out which SHELL you are using, just run _printenv SHELL_ in a terminal).
 - add the following line (after adaptation): 
-export BIBLIOGRAPHYDIR='/home/me/utilityPath/doi2bib/' 
+export BIBLIOGRAPHYDIR='/home/me/utilityPath/doi2bib/'
+- add the following line (after adaptation); this helps to avoid a hard rate limitation by the CrossRef and Unpaywall APIs, which could result in missing page counts (this is optional): 
+export DOI2BIB_EMAIL='your@email.com' 
 - copy the bib directory to /home/me/utilityPath/doi2bib/ if this directory is not where you have cloned doi2bib
 - start a new terminal and check if your variable has been set correctly by 
 > printenv BIBLIOGRAPHYDIR
@@ -130,7 +134,7 @@ Finally, so useful doi or url fields are not provided by scholar.
 
 ### Current version and future plans
 
-The version of September 2025 fixes some bugs and extends some functionalities. 
+The version of June 2026 fixes some bugs and extends some functionalities. 
 Obviously, the main plan is to allow a kind-of _pip3 install this_package_. Unfortunately, the doi2bib is already used by another package. So, I still need to find a workaround. 
 
 ## Use at your own risks... 
