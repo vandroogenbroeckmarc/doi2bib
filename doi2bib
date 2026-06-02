@@ -1,208 +1,307 @@
 #!/usr/bin/env python3
-
 # -*- coding: utf-8 -*-
-# doi2bib
-#
-# purpose:  Fetch bibtex references using the Digital Object Identifier DOI
-# author:   Marc Van Droogenbroeck
-# e-mail:   M.VanDroogenbroeck __ AT __ uliege__DOT__be
-#
+"""
+doi2bib - Fetch BibTeX references from a DOI.
 
-# ---------------------------------------------------------------
-# ----------- PARAMETERS TO BE CHANGED BY THE USER --------------
-# Default debug level.
-# Change it to 0 (none), 1 (mid), 2 (full) or 3 (insane all) if you want it to be more verbose
-DEBUG = 0
+Purpose
+-------
+Given a Digital Object Identifier (DOI), retrieve the corresponding metadata
+from ``doi.org`` and return a carefully-formatted BibTeX entry, with publisher-
+and series-specific fix-ups (arXiv, MDPI, IEEE, Springer LNCS, SPIE, ACM,
+Elsevier, etc.).
 
-# ----------- DO NOT CHANGE WHAT FOLLOWS  --------------
-# ---------------------------------------------------------------
+Author
+------
+Marc Van Droogenbroeck <M.VanDroogenbroeck __ AT __ uliege __ DOT __ be>
 
-# Specific to CVPR(W)
-switcher = {
-     1999: 'Fort Collins, Colorado, USA',
-     2000: 'Hilton Head, SC, USA',
-     2001: 'Kauai, HI, USA',
-     2003: 'Madison, WI, USA',
-     2004: 'washington',
-     2005: 'sandiego',
-     2006: 'newyork',
-     2007: 'Minneapolis, MN, USA',
-     2008: 'anchorage',
-     2009: 'miami',
-     2010: 'sanfrancisco',
-     2011: 'Colorado Springs, CO, USA',
-     2012: 'providence',
-     2013: 'Portland, OR, USA',
-     2014: 'colombus',
-     2015: 'boston',
-     2016: 'city-lasvegas',
-     2017: 'city-honolulu',
-     2018: 'city-saltlake',
-     2019: 'city-longbeach',
-     2020: 'city-seattle',
-     2021: 'city-nashville',
-     2022: 'city-neworleans',
-     2023: 'city-vancouver',
-     2024: 'city-seattle',
-     2025: 'city-nashville'
-}
+"""
 
-acronyms = ['IoT']
-cities = ['Brussels', 'Oxford']
-countries  = ['American', 'Belgium', 'China', 'Chinese', 'Europe', 'France', 'Japan', 'Korea', 'United States']
-names = ['Bernoulli', 'Carlo', 'Fourier', 'Gaussian', 'Gemini', 'Haar', 'Hough', 'Laplace', 'Laplacian', 'Markov', 'Minkowski', 'Monte', 'Shannon', 'Viterbi']
-multid = ['2D', '2-D', '2D/3D', '3D', '3-D']
-algorithm = ['Vibe', 'ITS', 'Yolo']
-keysTitle = ['A', 'The', 'In', 'From']
- 
-# ----------- End of added variables by Marc Van Droogenbroeck ------------
+from __future__ import annotations
 
-
-# -------------------------------------------------------------------------
-# Importations
-from os import environ, makedirs
-import os.path
+# ---------------------------------------------------------------------------
+# Standard library
+# ---------------------------------------------------------------------------
 import argparse
+import datetime
+import gzip
+import os
+import os.path
 import re
 import sys
-import gzip
-import datetime
-
-import requests
-import urllib.request
-import bibtexparser
-from bibtexparser.bwriter import BibTexWriter
-from bibtexparser.bparser import BibTexParser
-from bibtexparser.customization import homogenize_latex_encoding
-
-
-# To calculate the distance between strings
-import Levenshtein as lev
-
-# ------- Experimental ----
-# Try to count the number of pages from online PDF document
-import PyPDF2, io
-
-# ------- Experimental ----
-# Try to follow DOIs to corresponding https web page and get around anti script measures
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from bs4 import BeautifulSoup
-
 import time
-
-# -------------------------------------------------------------------------
-# For debugging
-
+import urllib.request
 from inspect import currentframe
+from os import environ, makedirs
+from typing import Callable, Dict, List, Optional, Tuple
 
-def printDEBUG(debugLevel, string):
-    if (DEBUG >= debugLevel):
-        print(string)
+# ---------------------------------------------------------------------------
+# Third-party
+# ---------------------------------------------------------------------------
+import bibtexparser
+import Levenshtein as lev
+import PyPDF2
+import requests
+from bibtexparser.bparser import BibTexParser
+from bibtexparser.bwriter import BibTexWriter
+from bibtexparser.customization import homogenize_latex_encoding
+from bs4 import BeautifulSoup
+from requests_html import HTMLSession
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
-def get_linenumber():
-    cf = currentframe()
-    printDEBUG(2, "This is line number = " + str(cf.f_back.f_lineno) )
 
-# -------------------------------------------------------------------------
-# Some global variables
+# ===========================================================================
+# USER-TUNABLE PARAMETERS
+# ===========================================================================
+#
+# Default verbosity level. It can be raised on the command line via ``-v``,
+# ``-vv`` (etc.).
+#   0 = silent, 1 = mid, 2 = full, 3 = insane.
+DEBUG: int = 0
 
-path_to_bibliography = os.getenv('BIBLIOGRAPHYDIR')
-if path_to_bibliography is None:
-    print("\nVariable BIBLIOGRAPHYDIR is not defined. Fix this and rerun the script\n")
-    exit()
+# Whether the raw DOI payload should be dumped to the log directory for audit.
+LOGGING: int = 1
 
-# ----------- Added variables by Marc Van Droogenbroeck ------------
-path_to_file_abbreviation = path_to_bibliography + "bib/abbreviation.bib"
-path_to_file_list_of_abbreviations = path_to_bibliography + "bib/_abbreviation_misc_/abbrev.txt.gz"
 
-IGNORELIST = [
+# ===========================================================================
+# CONSTANTS (do not change)
+# ===========================================================================
+
+# --- CVPR / CVPRW city-per-year lookup --------------------------------------
+CVPR_CITY_BY_YEAR: Dict[int, str] = {
+    1999: 'city-fortcollins',
+    2000: 'city-hilton',
+    2001: 'city-kauai',
+    2003: 'city-madison',
+    2004: 'city-washington',
+    2005: 'city-sandiego',
+    2006: 'city-newyork',
+    2007: 'city-minneapolis',
+    2008: 'city-anchorage',
+    2009: 'city-miami',
+    2010: 'city-sanfrancisco',
+    2011: 'city-coloradosprings',
+    2012: 'city-providence',
+    2013: 'city-portland',
+    2014: 'city-colombus',
+    2015: 'city-boston',
+    2016: 'city-lasvegas',
+    2017: 'city-honolulu',
+    2018: 'city-saltlake',
+    2019: 'city-longbeach',
+    2020: 'city-seattle',
+    2021: 'city-nashville',
+    2022: 'city-neworleans',
+    2023: 'city-vancouver',
+    2024: 'city-seattle',
+    2025: 'city-nashville',
+}
+# Backwards-compatible alias (the original script exposed this name)
+switcher = CVPR_CITY_BY_YEAR
+
+
+# --- Title-protection words -------------------------------------------------
+# Words that must be kept inside braces in the title to protect their case.
+ACRONYMS:     List[str] = ['IoT']
+CITIES:       List[str] = ['Brussels', 'Oxford']
+COUNTRIES: List[str] = [
+    'Afghanistan', 'African', 'Albania', 'Algeria', 'American', 'Andorra',
+    'Angola', 'Antigua and Barbuda', 'Arab', 'Argentina', 'Armenia',
+    'Australian', 'Austria', 'Azerbaijani',
+    'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium',
+    'Belgian', 'Belize', 'Benin', 'Bhutan', 'Bolivia',
+    'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brazilian', 'Brunei',
+    'Bulgaria', 'Burkina Faso', 'Burundi',
+    'Cabo Verde', 'Cambodia', 'Cameroon', 'Canada', 'Canadian',
+    'Central African Republic', 'Chad', 'Chile', 'China', 'Chinese',
+    'Colombia', 'Comoros', 'Congo', 'Costa Rica', 'Croatia', 'Cuba',
+    'Cyprus', 'Czech Republic',
+    'Denmark', 'Danish', 'Djibouti', 'Dominica', 'Dominican Republic',
+    'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea',
+    'Estonia', 'Eswatini', 'Ethiopia', 'Europe', 'European',
+    'Fiji', 'Finland', 'Finnish', 'France', 'French',
+    'Gabon', 'Gambia', 'Georgia', 'Germany', 'German', 'Ghana', 'Greece',
+    'Greek', 'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau', 'Guyana',
+    'Haiti', 'Honduras', 'Hungary', 'Hungarian',
+    'Iceland', 'India', 'Indian', 'Indonesia', 'Iranian', 'Iraq', 'Ireland',
+    'Irish', 'Israel', 'Israeli', 'Italy', 'Italian',
+    'Jamaica', 'Japan', 'Japanese', 'Jordan',
+    'Kazakhstan', 'Kenya', 'Kiribati', 'Korea', 'Korean', 'Kuwait',
+    'Kyrgyzstan',
+    'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya',
+    'Liechtenstein', 'Lithuania', 'Luxembourg',
+    'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta',
+    'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Mexican',
+    'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco',
+    'Mozambique', 'Myanmar',
+    'Namibia', 'Nauru', 'Nepal', 'Netherlands', 'Dutch', 'New Zealand',
+    'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia',
+    'Norway', 'Norwegian',
+    'Oman',
+    'Pakistan', 'Pakistani', 'Palau', 'Palestine', 'Panama', 'Papua New Guinea',
+    'Paraguay', 'Peru', 'Philippines', 'Filipino', 'Poland', 'Polish',
+    'Portugal', 'Portuguese',
+    'Qatar',
+    'Romania', 'Russia', 'Russian', 'Rwanda',
+    'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines',
+    'Samoa', 'San Marino', 'Sao Tome and Principe', 'Saudi Arabia', 'Senegal',
+    'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia',
+    'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa', 'South Korea',
+    'South Sudan', 'Spain', 'Spanish', 'Sri Lanka', 'Sudan', 'Suriname',
+    'Sweden', 'Swedish', 'Switzerland', 'Swiss', 'Syria',
+    'Taiwan', 'Taiwanese', 'Tajikistan', 'Tanzania', 'Thailand', 'Thai',
+    'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia',
+    'Turkey', 'Turkish', 'Turkmenistan', 'Tuvalu',
+    'Uganda', 'Ukraine', 'Ukrainian', 'United Arab Emirates',
+    'United Kingdom', 'British', 'United States', 'American', 'Uruguay',
+    'Uzbekistan',
+    'Vanuatu', 'Vatican', 'Venezuela', 'Vietnam', 'Vietnamese',
+    'Yemen',
+    'Zambia', 'Zimbabwe',
+]
+PROPER_NAMES: List[str] = [
+    'Bhattacharyya', 'Bernoulli', 'Carlo', 'Euclidean', 'Fourier',
+    'Gaussian', 'Gemini', 'Gibbs', 'Haar', 'Hough', 'Laplace', 'Laplacian',
+    'Markov', 'Minkowski', 'Monte', 'Shannon', 'Viterbi', 'Voronoi',
+]
+MULTI_D:      List[str] = ['2D', '2-D', '2D/3D', '3D', '3-D', '5G', '6G']
+ALGORITHMS:   List[str] = ['Vibe', 'ITS', 'Yolo']
+
+# --- Abbreviation database --------------------------------------------------
+# Words that are never abbreviated when building a journal/conference name.
+IGNORELIST: List[str] = [
     "of", "and", "in", "at", "on", "the", "&",
-    "ab", "um"
+    "ab", "um",
 ]
 
-# MONTH_RE = re.compile("\s*month\s*=\s*\{\s*?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*\},?")
-LATEST_ISSN = "http://www.issn.org/wp-content/uploads/2013/09/LTWA_20160915.txt"
-ISSN_UPD = datetime.date(2016, 9, 15)
+# Abbreviation database source and reference date.
+LATEST_ISSN: str = (
+    "http://www.issn.org/wp-content/uploads/2013/09/LTWA_20160915.txt"
+)
+ISSN_UPD: datetime.date = datetime.date(2016, 9, 15)
 
 
-# -------------------------------------------------------------------------
-# Definitions of functions
+# --- Polite API contact e-mail ----------------------------------------------
+# CrossRef and Unpaywall ask for an e-mail address so they can contact you if
+# your client misbehaves.  We read it from the environment variable
+# DOI2BIB_EMAIL; if that is not set we fall back to a generic placeholder that
+# satisfies the API requirement without exposing anyone's real address.
+_CONTACT_EMAIL: str = environ.get("DOI2BIB_EMAIL", "doi2bib-user@example.com")
 
-# Function which returns last word
-def lastWord(string):
-    # split by space and converting
-    # string to list and
-    lis = list(string.split(" "))
-     
-    # length of list
-    length = len(lis)
-     
-    # returning last element in list
-    return lis[length-1]
+# --- HTTP headers -----------------------------------------------------------
+# Some publishers actively block bare requests; a spoofed User-Agent avoids it.
+_SPOOFED_USER_AGENT: str = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/92.0.4515.159 Safari/537.36"
+)
+_SPOOFED_HEADERS: List[Tuple[str, str]] = [
+    ('User-Agent',               _SPOOFED_USER_AGENT),
+    ('Connection',               'keep-alive'),
+    ('Upgrade-Insecure-Requests', '1'),
+]
 
-def organize_authors(string):
-    # Sometimes there is a "et al." in the list to authors. Mention it
-    if string.find('and et al.') != -1: 
-       print("\nWARNING, there is an 'et al.' in the list of authors!!" )
-    # Check if the format is "Doe, John"
-    if string.find(',') > 1: 
-        newString = string
 
-    else: 
-        newString = ""
-        # First we split based on the words "and"
-        authors = string.split("and")
-        for i in range(0, len(authors)):
-            author = authors[i].rstrip().lstrip()
-            lastname = lastWord(author).rstrip().lstrip()
-            firstname = author.replace(lastname,'').rstrip().lstrip()
-            authors[i] = lastname + ', ' + firstname
-        newString = " and ".join(authors)
-    return newString
+# --- Required environment variable pointing at the bibliography root --------
+_BIBLIOGRAPHY_ENV_VAR: str = 'BIBLIOGRAPHYDIR'
 
-def address(Year):
-    return switcher.get(Year, default)()
 
-def unix_data_home():
+# ===========================================================================
+# DEBUG / LOGGING HELPERS
+# ===========================================================================
+
+def printDEBUG(level: int, message: object) -> None:
+    """Print *message* when the current DEBUG level is at least *level*."""
+    if DEBUG >= level:
+        print(message)
+
+
+def get_linenumber() -> None:
+    """At DEBUG>=2, print the line number of the caller (acts as checkpoint)."""
+    cf = currentframe()
+    printDEBUG(2, "This is line number = " + str(cf.f_back.f_lineno))
+
+
+# ===========================================================================
+# CROSS-PLATFORM PATHS
+# ===========================================================================
+
+def unix_data_home() -> str:
     try:
         return environ['XDG_DATA_HOME']
     except KeyError:
         return os.path.join(environ['HOME'], '.local', 'share')
 
-def windows_data_home():
+
+def windows_data_home() -> str:
     return environ['APPDATA']
 
-def darwin_data_home():
+
+def darwin_data_home() -> str:
     return os.path.join(environ['HOME'], 'Library', 'Application Support')
 
-def data_home(folder=None):
+
+def data_home(folder: Optional[str] = None) -> str:
+    """Return the OS-specific user data directory (optionally joined with *folder*)."""
     platform = sys.platform
-    printDEBUG(2, "Platform = " + platform) 
+    printDEBUG(2, "Platform = " + platform)
 
     if platform == 'win32':
-        data_dir = windows_data_home()
-        printDEBUG(2, "Windows platform")        
+        root = windows_data_home()
+        printDEBUG(2, "Windows platform")
     elif platform == 'darwin':
-        data_dir = darwin_data_home()
-        printDEBUG(2, "Mac OS platform: data_dir = " + data_dir)
+        root = darwin_data_home()
+        printDEBUG(2, "Mac OS platform: data_dir = " + root)
     else:
-        data_dir = unix_data_home()
-        printDEBUG(2, "Unix platform")        
+        root = unix_data_home()
+        printDEBUG(2, "Unix platform")
 
-    if folder is None:
-        return data_dir
-    else:
-        return os.path.join(data_dir, folder)
+    return root if folder is None else os.path.join(root, folder)
 
-def dl_abbrev(fname='abbrev.txt.gz'):
+
+def address(Year):
+    """Return the CVPR host city for *Year*.
+
+    Retained for backwards-compatibility with the original script.  Note: the
+    original definition was never called and would raise ``NameError`` because
+    of a reference to an undefined ``default`` symbol; its literal body is
+    preserved below, and a safer dict-based lookup is also offered.
+    """
+    # Original body - kept verbatim (would crash if invoked):
+    # return switcher.get(Year, default)()
+    return switcher.get(Year, '')
+
+
+# --- Bibliography directory (evaluated at import time) ----------------------
+
+path_to_bibliography = os.getenv(_BIBLIOGRAPHY_ENV_VAR)
+if path_to_bibliography is None:
+    print(
+        f"\nVariable {_BIBLIOGRAPHY_ENV_VAR} is not defined. "
+        "Fix this and rerun the script\n"
+    )
+    exit()
+
+if LOGGING > 0:
+    path_to_log = path_to_bibliography + "log/"
+    printDEBUG(2, "Logging and path to log = " + path_to_log)
+
+path_to_file_abbreviation = path_to_bibliography + "bib/abbreviation.bib"
+
+
+# ===========================================================================
+# ISSN LTWA ABBREVIATION DATABASE
+# ===========================================================================
+
+def dl_abbrev(fname: str = 'abbrev.txt.gz') -> None:
+    """Download the ISSN LTWA abbreviation list into the citation data dir."""
     url = LATEST_ISSN
-    printDEBUG(2, "Fecthing the file " + url + " to build abbrev.txt.gz")
+    printDEBUG(2, "Fetching the file " + url + " to build abbrev.txt.gz")
     r = requests.get(url, allow_redirects=True)
     data = r.content
     directory = data_home('citation')
@@ -211,994 +310,2036 @@ def dl_abbrev(fname='abbrev.txt.gz'):
     with gzip.open(os.path.join(directory, fname), 'wb') as f:
         f.write(data)
 
-def load_abbrev(fname):
+
+def load_abbrev(fname: str) -> Dict[str, str]:
     """
-    Loads the abbreviation database
+    Load the ISSN abbreviations database as a ``{word: abbreviation}`` dict.
+
+    The database is (re-)downloaded automatically when missing or out of date.
     """
-    # Check if we have the abbreviations list
     target = os.path.join(data_home('citation'), fname)
     printDEBUG(2, "TARGET = " + target)
 
     if not os.path.isfile(target):
-        # print("%s not found; downloading..." % target, file=sys.stderr)
         print("%s not found; downloading..." % target)
         dl_abbrev(fname)
 
-    # Check for outdated abbreviation list
     mtime = datetime.date.fromtimestamp(os.path.getmtime(target))
     if not mtime > ISSN_UPD:
-        # print("%s is out of date; redownloading..." % target, file=sys.stderr)
         print("%s is out of date; redownloading..." % target)
         dl_abbrev(fname)
 
-    # Load the abbreviations database into memory
-    data = {}
+    data: Dict[str, str] = {}
     with gzip.open(target, 'rt', encoding="utf-16") as f:
         for line in f:
-            # usually the first line starts with WORD
+            # Skip the header line
             if line.startswith('WORD'):
                 continue
             parts = line.split("\t")
-            langs = parts[2].split(", ")
             jname = parts[0]
             jabbrev = parts[1]
             data[jname.lower()] = jabbrev.lower()
     return data
 
-def journal_abbrev(name):
-    """
-    Abbreviates a journal title
-    """
+
+def _lookup_single_abbrev(word: str, data: Dict[str, str]) -> Optional[str]:
+    """Return the LTWA abbreviation for a single *word* (or None if none matches)."""
+    for k, v in data.items():
+        # Keys ending in ``-`` are prefix patterns
+        if k.endswith("-"):
+            if word.lower().startswith(k[:-1]):
+                return v.capitalize() if v != "n.a." else word.lower().capitalize()
+        else:
+            if word.lower() == k:
+                return v.capitalize() if v != "n.a." else word.lower().capitalize()
+    return None
+
+
+def journal_abbrev(name: str) -> str:
+    """Return an abbreviated journal title for *name* based on the ISSN LTWA."""
     printDEBUG(2, "Loading abbreviation for journal as ")
-    
     printDEBUG(3, "Printing the full (long) list of abbreviations...")
-    printDEBUG(3, load_abbrev(os.path.join(sys.path[0] + "abbrev.txt.gz")) )
+    printDEBUG(3, load_abbrev(os.path.join(sys.path[0] + "abbrev.txt.gz")))
 
     data = load_abbrev(os.path.join(sys.path[0], "abbrev.txt.gz"))
-    n_abbrev = []
 
-    (name, _, _) = name.partition(":")
+    name, _, _ = name.partition(":")
     parts = re.split(r"\s+", name)
 
+    # Short one-word titles are returned unchanged.
     if len(parts) == 1 and len(parts[0]) < 12:
         return name
+
+    abbreviated: List[str] = []
     for word in parts:
-        # Do not abbreviate wordsin the IGNORELIST
         if word.lower() in IGNORELIST:
             continue
-        for (k,v) in data.items():
-            found = False
 
-            # If the key ends with - it means we are checking for a prefix
-            if k.endswith("-"):
-                if word.lower().startswith(k[:-1]):
-                    if v != "n.a.":
-                        n_abbrev.append(v.capitalize())
-                    else:
-                        n_abbrev.append(word.lower().capitalize())
-                    found = True
-                    break
-            # Else we are checking for a whole match
-            else:
-                if word.lower() == k:
-                    if v != "n.a.":
-                        n_abbrev.append(v.capitalize())
-                    else:
-                        n_abbrev.append(word.lower().capitalize())
-                    found = True
-                    break
+        hit = _lookup_single_abbrev(word, data)
+        if hit is not None:
+            abbreviated.append(hit)
+        else:
+            # Words already fully upper-case are preserved, otherwise Title-cased.
+            abbreviated.append(word if word.isupper() else word.capitalize())
 
-        if not found:
-            # If all characters are uppercase leave as is
-            if not word.isupper():
-                n_abbrev.append(word.capitalize())
-            else:
-                n_abbrev.append(word)
-    return " ".join(n_abbrev)
+    return " ".join(abbreviated)
 
-# Get content from URL 
-# The "usual" requests.get() function could not be used since sometimes it fails due to redirects
-def getContentFromURL(url):
-    # The following lines are necessary for some sites because they try to block "web spiders"
+
+# ===========================================================================
+# AUTHOR / NAME UTILITIES
+# ===========================================================================
+
+def lastWord(string: str) -> str:
+    """Return the last whitespace-separated token of *string*."""
+    lis = list(string.split(" "))
+    return lis[len(lis) - 1]
+
+
+def organize_authors(string: str) -> str:
+    """
+    Normalise an ``author`` field to the ``"Last, First and Last, First"`` form.
+
+    If the string already contains commas the original form is preserved; if
+    any entry is literally ``"et al."`` a warning is emitted on stdout.
+    """
+    if string.find('and et al.') != -1:
+        print("\nWARNING, there is an 'et al.' in the list of authors!!")
+
+    if string.find(',') > 1:
+        return string
+
+    authors = string.split("and")
+    for i in range(len(authors)):
+        author    = authors[i].rstrip().lstrip()
+        lastname  = lastWord(author).rstrip().lstrip()
+        firstname = author.replace(lastname, '').rstrip().lstrip()
+        authors[i] = lastname + ', ' + firstname
+    return " and ".join(authors)
+
+
+# ===========================================================================
+# HTTP / PDF HELPERS
+# ===========================================================================
+
+def getContentFromURL(url: str) -> str:
+    """
+    Download *url* and return its decoded body.
+
+    Uses ``urllib`` with a spoofed User-Agent because some publishers
+    (Springer, IEEE, etc.) actively block naive HTTP clients.
+    """
     opener = urllib.request.build_opener()
-    opener.addheaders = [('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'), ("Connection", "keep-alive"), ("Upgrade-Insecure-Requests",'1')]
+    opener.addheaders = list(_SPOOFED_HEADERS)
     urllib.request.install_opener(opener)
 
-    # Now we are ready to send url request
     u = urllib.request.urlopen(url)
-    charset=u.info().get_content_charset()
+    charset = u.headers.get_content_charset(failobj="utf-8")
     return u.read().decode(charset)
 
-# Alternative specific to MDPI
-def get_fulltext_pdf_url_from_doi(doi_url):
-    # Setup headless Chrome options
+
+def _make_headless_chrome(**prefs) -> webdriver.Chrome:
+    """Return a configured headless Chrome driver; *prefs* are forwarded to ``prefs``."""
     options = Options()
+    if prefs:
+        options.add_experimental_option('prefs', prefs)
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
+    return webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        options=options,
+    )
 
-    # Initialize WebDriver
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
+def get_fulltext_pdf_url_from_doi(doi_url: str) -> Optional[str]:
+    """
+    Follow *doi_url* in a headless Chrome and return the value of any
+    ``<meta name="fulltext_pdf" content="...">`` tag found on the landing
+    page (used by the MDPI handler).
+    """
+    driver = _make_headless_chrome()
     try:
         driver.get(doi_url)
-
-        # Wait for page to load completely (max 15 seconds)
         WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.TAG_NAME, "head"))
         )
-
-        # Get page source after redirection
-        page_source = driver.page_source
-
-        # Use BeautifulSoup to parse page content
-        soup = BeautifulSoup(page_source, "html.parser")
-
-        # Find the <meta name="fulltext_pdf" content="..."> tag
+        soup = BeautifulSoup(driver.page_source, "html.parser")
         meta_tag = soup.find("meta", attrs={"name": "fulltext_pdf"})
-
         if meta_tag and meta_tag.has_attr("content"):
             return meta_tag["content"]
-        else:
-            return None
+        return None
     finally:
         driver.quit()
 
-# Solution specific to MDPI
-def get_pdf_page_count(pdf_url):
-    printDEBUG(1, "Get the number of page of the following PDF document : " + pdf_url) 
+
+def get_pdf_page_count(pdf_url: str) -> int:
+    """Download *pdf_url* through headless Chrome and count its pages."""
+    printDEBUG(1, "Get the number of page of the following PDF document : " + pdf_url)
+
     download_dir = os.path.abspath("selenium_download")
     os.makedirs(download_dir, exist_ok=True)
-
     # Clear previous downloads
     for f in os.listdir(download_dir):
         os.remove(os.path.join(download_dir, f))
 
-    # Setup Chrome options for PDF download
-    options = Options()
-    options.add_experimental_option('prefs', {
-        "download.default_directory": download_dir,
-        "download.prompt_for_download": False,
-        "plugins.always_open_pdf_externally": True
+    driver = _make_headless_chrome(**{
+        "download.default_directory":       download_dir,
+        "download.prompt_for_download":     False,
+        "plugins.always_open_pdf_externally": True,
     })
-    options.add_argument("--headless")  # Remove if you want to see the browser
+    try:
+        driver.get(pdf_url)
+        time.sleep(10)       # wait for the download to complete
+    finally:
+        driver.quit()
 
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
-    driver.get(pdf_url)
-    time.sleep(10)  # wait for download to complete
-    driver.quit()
-
-    # Find downloaded PDF
     pdf_files = [f for f in os.listdir(download_dir) if f.endswith('.pdf')]
     if not pdf_files:
         raise FileNotFoundError("No PDF downloaded")
 
     pdf_path = os.path.join(download_dir, pdf_files[0])
-
     with open(pdf_path, 'rb') as f:
         reader = PyPDF2.PdfReader(f)
         return len(reader.pages)
 
 
-# -------------------------------------------------------------------------
-# Functions to "correct" crossref entries for specific editors
-# -------------------------------------------------------------------------
-def handle_arXiV(entry):
-    printDEBUG(1, "arXiv entry")
-    entry['ID'] = entry['ID'] + "-arxiv"
-    entry['ENTRYTYPE'] = "article"
-    entry['journal'] = "arxiv"
-    entry['keywords'] = ''
-    number = entry['doi'].replace("10.48550/ARXIV.", "")
-    entry['volume'] = "abs/" + number 
-    entry['eprint'] = number 
-    entry['eprinttype'] = "arXiv"
-    entry['doi'] = entry['doi'].replace("ARXIV", "arXiv")
-    entry['url'] = "https://doi.org/" + entry['doi']
+# ===========================================================================
+# PREPRINT / PUBLISHER HANDLERS
+# ===========================================================================
+#
+# Each of the ``handle_*`` functions takes a BibTeX entry (a dict produced by
+# ``bibtexparser``) and returns it - normally mutated in place - after having
+# tagged it according to the originating preprint server or publisher.
+# ---------------------------------------------------------------------------
+
+def _tag_as_preprint(entry: dict,
+                     id_suffix: str,
+                     journal:   str,
+                     eprinttype: str) -> dict:
+    """Shared body for every "tag this entry as preprint server X" handler."""
+    entry['ID']         = entry['ID'] + "-" + id_suffix
+    entry['ENTRYTYPE']  = "article"
+    entry['journal']    = journal
+    entry['keywords']   = ''
+    entry['eprinttype'] = eprinttype
     return entry
 
-def handle_bioRxiv(entry):
+
+def handle_arXiV(entry: dict) -> dict:
+    printDEBUG(1, "arXiv entry")
+    number = entry['doi'].replace("10.48550/ARXIV.", "")
+    _tag_as_preprint(entry, "arxiv", "arxiv", "arXiv")
+    entry['volume'] = "abs/" + number
+    entry['eprint'] = number
+    entry['doi']    = entry['doi'].replace("ARXIV", "arXiv")
+    entry['url']    = "https://doi.org/" + entry['doi']
+    return entry
+
+
+# ---------------------------------------------------------------------------
+# arXiv "et al." author-list handling
+# ---------------------------------------------------------------------------
+# Some arXiv entries truncate the author list with "... and et al.". For
+# these, the pipeline produces TWO outputs:
+#   1. short form: author ends with "et al" (no "and", no dot) and the
+#      key gets a trailing "-etal".
+#   2. full form: author list scraped from arxiv.org/abs/<eprint>, passed
+#      through the utils/bib_ascii_fix.py substitution table so the names
+#      look like the rest of bib/all.bib, and keyed with the normal key.
+_ET_AL_TAIL_RE  = re.compile(r'\s*and\s+et\s+al\.?\s*$', re.IGNORECASE)
+_ET_AL_ALONE_RE = re.compile(r'\bet\s+al\.?\s*$',        re.IGNORECASE)
+
+_ARXIV_META_AUTHOR_RE = re.compile(
+    r'<meta\s+name=["\']citation_author["\']\s+content=["\']([^"\']+)["\']',
+    re.IGNORECASE,
+)
+
+# ---------------------------------------------------------------------------
+# Inline ASCII-substitution table.
+#
+# Used exclusively by build_arxiv_etal_full below to clean the author list
+# scraped from arxiv.org, which is delivered as raw Unicode. The table is
+# deliberately inlined (rather than lazy-imported from utils/bib_ascii_fix.py)
+# so the arXiv-et-al feature does not silently fall back to raw Unicode if
+# the utility module cannot be loaded (missing file, altered sys.path, etc.).
+#
+# utils/bib_ascii_fix.py remains the authoritative standalone tool for
+# rewriting whole .bib files; this dict is a focused subset covering every
+# character that realistically appears in an author name (letter accents,
+# ligatures, stroke/slashed letters, dashes, smart quotes, spaces).
+# ---------------------------------------------------------------------------
+_AUTHOR_ASCII_SUBSTITUTIONS: Dict[str, str] = {
+    # Acute accent
+    "á": r"{\'a}", "é": r"{\'e}", "í": r"{\'\i}", "ó": r"{\'o}", "ú": r"{\'u}",
+    "ý": r"{\'y}", "ć": r"{\'c}", "ń": r"{\'n}", "ś": r"{\'s}", "ź": r"{\'z}",
+    "Á": r"{\'A}", "É": r"{\'E}", "Í": r"{\'I}", "Ó": r"{\'O}", "Ú": r"{\'U}",
+    "Ć": r"{\'C}", "Ń": r"{\'N}", "Ś": r"{\'S}", "Ź": r"{\'Z}",
+    # Grave
+    "à": r"{\`a}", "è": r"{\`e}", "ì": r"{\`\i}", "ò": r"{\`o}", "ù": r"{\`u}",
+    "À": r"{\`A}", "È": r"{\`E}", "Ì": r"{\`I}", "Ò": r"{\`O}", "Ù": r"{\`U}",
+    # Circumflex
+    "â": r"{\^a}", "ê": r"{\^e}", "î": r"{\^\i}", "ô": r"{\^o}", "û": r"{\^u}",
+    "ŵ": r"{\^w}", "ŷ": r"{\^y}",
+    "Â": r"{\^A}", "Ê": r"{\^E}", "Î": r"{\^I}", "Ô": r"{\^O}", "Û": r"{\^U}",
+    # Diaeresis / umlaut
+    "ä": r'{\"a}', "ë": r'{\"e}', "ï": r'{\"\i}', "ö": r'{\"o}', "ü": r'{\"u}',
+    "ÿ": r'{\"y}',
+    "Ä": r'{\"A}', "Ë": r'{\"E}', "Ï": r'{\"I}', "Ö": r'{\"O}', "Ü": r'{\"U}',
+    # Tilde
+    "ã": r"{\~a}", "ñ": r"{\~n}", "õ": r"{\~o}",
+    "Ã": r"{\~A}", "Ñ": r"{\~N}", "Õ": r"{\~O}",
+    # Cedilla
+    "ç": r"{\c{c}}", "Ç": r"{\c{C}}", "ş": r"{\c{s}}", "Ş": r"{\c{S}}",
+    # Caron / háček
+    "č": r"{\v{c}}", "š": r"{\v{s}}", "ž": r"{\v{z}}", "ě": r"{\v{e}}",
+    "ř": r"{\v{r}}", "ď": r"{\v{d}}", "ť": r"{\v{t}}", "ň": r"{\v{n}}",
+    "ľ": r"{\v{l}}",
+    "Č": r"{\v{C}}", "Š": r"{\v{S}}", "Ž": r"{\v{Z}}", "Ě": r"{\v{E}}",
+    "Ř": r"{\v{R}}",
+    # Breve
+    "ă": r"{\u{a}}", "ĕ": r"{\u{e}}", "ğ": r"{\u{g}}", "ŭ": r"{\u{u}}",
+    "Ă": r"{\u{A}}", "Ğ": r"{\u{G}}",
+    # Ring
+    "å": r"{\r{a}}", "Å": r"{\r{A}}", "ů": r"{\r{u}}", "Ů": r"{\r{U}}",
+    # Double acute
+    "ő": r"{\H{o}}", "ű": r"{\H{u}}", "Ő": r"{\H{O}}", "Ű": r"{\H{U}}",
+    # Ogonek
+    "ą": r"{\k{a}}", "ę": r"{\k{e}}", "Ą": r"{\k{A}}", "Ę": r"{\k{E}}",
+    # Macron
+    "ā": r"{\=a}", "ē": r"{\=e}", "ī": r"{\=\i}", "ō": r"{\=o}", "ū": r"{\=u}",
+    "Ā": r"{\=A}", "Ē": r"{\=E}", "Ō": r"{\=O}", "Ū": r"{\=U}",
+    # Stroke / slashed
+    "ø": r"{\o}", "Ø": r"{\O}", "ł": r"{\l}", "Ł": r"{\L}",
+    "đ": r"{\dj}", "Đ": r"{\DJ}",
+    # Dot above
+    "ż": r"{\.z}", "Ż": r"{\.Z}", "ė": r"{\.e}", "Ė": r"{\.E}",
+    # Ligatures
+    "æ": r"{\ae}", "Æ": r"{\AE}", "œ": r"{\oe}", "Œ": r"{\OE}", "ß": r"{\ss}",
+    # Icelandic / other Latin
+    "þ": r"{\th}", "Þ": r"{\TH}", "ð": r"{\dh}", "Ð": r"{\DH}",
+    # Smart quotes / apostrophes (occasional in author middle names)
+    "\u2018": "`",  "\u2019": "'",
+    "\u201C": "``", "\u201D": "''",
+    # Dashes occasionally used in hyphenated surnames
+    "\u2013": "--", "\u2014": "---",
+    "\u2010": "-",  "\u2011": "-", "\u2212": "-",
+    # Spaces sometimes present in scraped HTML
+    "\u00A0": "~",  "\u2009": " ",  "\u202F": "~",  "\u2007": " ",
+    "\u200B": "",   "\u200C": "",   "\u200D": "",   "\uFEFF": "",
+}
+
+
+def author_list_has_et_al(author: str) -> bool:
+    """True if *author* ends with an 'et al.' marker."""
+    a = (author or '').strip()
+    return bool(_ET_AL_TAIL_RE.search(a) or _ET_AL_ALONE_RE.search(a))
+
+
+def normalise_et_al_tail(author: str) -> str:
+    """Rewrite '... and et al.' / '... et al.' to '... et al'."""
+    a = (author or '').strip()
+    a = _ET_AL_TAIL_RE.sub(' et al', a)
+    a = _ET_AL_ALONE_RE.sub('et al', a)
+    return a
+
+
+def fetch_arxiv_authors(eprint_id: str) -> Optional[List[str]]:
+    """Return the full author list for arxiv.org/abs/<eprint_id>.
+
+    Uses the per-author ``<meta name="citation_author">`` tags, which
+    arXiv exposes on every abs page in canonical "Last, First" form.
+    Returns ``None`` on any failure (network, parse).
+    """
+    url = f"https://arxiv.org/abs/{eprint_id}"
+    try:
+        html = getContentFromURL(url)
+    except Exception as exc:
+        printDEBUG(1, f"arxiv fetch failed for {url}: {exc}")
+        return None
+    authors = _ARXIV_META_AUTHOR_RE.findall(html)
+    return authors or None
+
+
+def _apply_ascii_substitutions(text: str) -> str:
+    """Replace every non-ASCII character in *text* with its LaTeX/BibTeX
+    equivalent, using the inline ``_AUTHOR_ASCII_SUBSTITUTIONS`` table.
+
+    This is a self-contained substitution loop — it never silently
+    no-ops, so every scraped arXiv author written by
+    :func:`build_arxiv_etal_full` is guaranteed to be ASCII-clean for
+    every character in the table. Any code point that is *not* in the
+    table is passed through unchanged and reported via ``printDEBUG`` so
+    the user can add it.
+    """
+    if not text:
+        return text
+    out: List[str] = []
+    missing: Dict[str, int] = {}
+    for ch in text:
+        if ord(ch) < 128:
+            out.append(ch)
+            continue
+        repl = _AUTHOR_ASCII_SUBSTITUTIONS.get(ch)
+        if repl is None:
+            out.append(ch)
+            missing[ch] = missing.get(ch, 0) + 1
+        else:
+            out.append(repl)
+    if missing:
+        for ch, n in sorted(missing.items(), key=lambda p: -p[1]):
+            printDEBUG(1,
+                f"ascii-fix: unhandled U+{ord(ch):04X} {ch!r} "
+                f"(x{n}); add to _AUTHOR_ASCII_SUBSTITUTIONS")
+    return "".join(out)
+
+
+_AUTHOR_SPLIT_RE = re.compile(r'\s+and\s+', re.IGNORECASE)
+
+
+def count_named_authors_before_et_al(author: str) -> int:
+    """Count the explicitly-named authors in *author* before the 'et al.'
+    marker.
+
+    For example:
+      "Cioppa and Deliège and et al."       -> 2
+      "Smith, J. and Doe, J. and et al."    -> 2
+      "Smith et al."                         -> 1  (single name before tail)
+      "et al."                               -> 0
+    """
+    a = (author or '').strip()
+    # Drop the tail in either of its forms.
+    a = _ET_AL_TAIL_RE.sub('', a)
+    a = _ET_AL_ALONE_RE.sub('', a)
+    a = a.strip().rstrip(',').strip()
+    if a.lower().endswith(' and'):
+        a = a[:-4].rstrip()
+    if not a:
+        return 0
+    parts = [p.strip() for p in _AUTHOR_SPLIT_RE.split(a) if p.strip()]
+    return len(parts)
+
+
+def build_arxiv_etal_short(entry: dict,
+                           scraped: Optional[List[str]] = None) -> dict:
+    """Return a *copy* of *entry* in which the author list is the first
+    ``K`` scraped arXiv authors (canonical "Last, First" form, ASCII-
+    cleaned) followed by ``et al``; the key gets ``-etal`` appended.
+
+    ``K`` is the number of explicitly-named authors the original entry
+    had before its "et al." marker, so the short form keeps the same
+    visible length while gaining uniform "Last, First" formatting.
+
+    If *scraped* is ``None`` (or empty), or if the original entry has
+    no named authors, this falls back to the previous behaviour: the
+    user-typed author list with its tail normalised to ``et al``. That
+    way the short form is still emitted when the arXiv scrape fails.
+    """
+    short = dict(entry)
+    k = count_named_authors_before_et_al(entry.get('author', ''))
+    if scraped and k > 0:
+        first_k = [_apply_ascii_substitutions(a.strip())
+                   for a in scraped[:k] if a and a.strip()]
+        if first_k:
+            short['author'] = ' and '.join(first_k) + ' et al'
+        else:
+            short['author'] = normalise_et_al_tail(entry.get('author', ''))
+    else:
+        short['author'] = normalise_et_al_tail(entry.get('author', ''))
+    key = entry.get('ID', '')
+    if not key.endswith('-etal'):
+        key = key + '-etal'
+    short['ID'] = key
+    return short
+
+
+def build_arxiv_etal_full(entry: dict,
+                          scraped: Optional[List[str]] = None) -> Optional[dict]:
+    """Return a *copy* of *entry* with only the ``author`` field replaced
+    by the full arXiv author list in canonical "Last, First" form,
+    joined by ``" and "``, and ASCII-cleaned via
+    :func:`_apply_ascii_substitutions`.
+
+    *scraped* is the list previously obtained with
+    :func:`fetch_arxiv_authors`; if ``None`` is supplied the function
+    will scrape on its own. Returns ``None`` if scraping fails or the
+    entry lacks an ``eprint`` field.
+
+    All other fields — including ``ID``, ``title``, ``journal``, … —
+    are preserved byte-for-byte; by the time this runs, the main
+    pipeline has already finalised the key (with the ``-arxiv`` suffix)
+    and the title braces, so rebuilding either one here would only
+    undo that work.
+    """
+    if scraped is None:
+        eprint = entry.get('eprint')
+        if not eprint:
+            return None
+        scraped = fetch_arxiv_authors(eprint)
+        if not scraped:
+            return None
+    if not scraped:
+        return None
+    cleaned = [_apply_ascii_substitutions(a.strip())
+               for a in scraped if a and a.strip()]
+    if not cleaned:
+        return None
+    full = dict(entry)
+    full['author'] = ' and '.join(cleaned)
+    return full
+
+
+def handle_bioRxiv(entry: dict) -> dict:
     printDEBUG(1, "bioRxiv entry")
-    entry['ID'] = entry['ID'] + "-bioRxiv"
-    entry['ENTRYTYPE'] = "article"
-    entry['journal'] = "biorxiv"
-    entry['keywords'] = ''
-    entry['eprinttype'] = "bioRxiv"
+    _tag_as_preprint(entry, "bioRxiv", "biorxiv", "bioRxiv")
     entry['publisher'] = "Cold Spring Harbor Laboratory"
     return entry
 
-def handle_PREPRINT(entry):
+
+def handle_PREPRINT(entry: dict) -> dict:
     printDEBUG(1, "PREPRINT entry")
-    entry['ID'] = entry['ID'] + "-preprint"
-    entry['ENTRYTYPE'] = "article"
-    entry['journal'] = "PREPRINT"
-    entry['keywords'] = ''
-    entry['eprinttype'] = "PREPRINT"
-    return entry
+    return _tag_as_preprint(entry, "preprint", "PREPRINT", "PREPRINT")
 
-def handle_preprintMDPI(entry):
+
+def handle_preprintMDPI(entry: dict) -> dict:
     printDEBUG(1, "Preprint entry")
-    entry['ID'] = entry['ID'] + "-preprint"
-    entry['ENTRYTYPE'] = "article"
-    entry['journal'] = "Preprint"
-    entry['keywords'] = ''
-    entry['eprinttype'] = "Preprint"
-    return entry
+    return _tag_as_preprint(entry, "preprint", "Preprint", "Preprint")
 
-def handle_PsyArXiv(entry):
+
+def handle_PsyArXiv(entry: dict) -> dict:
     printDEBUG(1, "PsyArXiv entry")
-    entry['ID'] = entry['ID'] + "-psyarxiv"
-    entry['ENTRYTYPE'] = "article"
-    entry['journal'] = "psyarxiv"
-    entry['keywords'] = ''
-    entry['eprinttype'] = "PsyArXiv"
-    return entry
+    return _tag_as_preprint(entry, "psyarxiv", "psyarxiv", "PsyArXiv")
 
-def handle_ssrn(entry):
+
+def handle_ssrn(entry: dict) -> dict:
     printDEBUG(1, "SSRN entry")
-    entry['ID'] = entry['ID'] + "-ssrn"
-    entry['ENTRYTYPE'] = "article"
-    entry['journal'] = "ssrn"
-    entry['keywords'] = ''
-    entry['eprinttype'] = "SSRN"
-    return entry
+    return _tag_as_preprint(entry, "ssrn", "ssrn", "SSRN")
 
-def handle_TechRxiv(entry):
+
+def handle_sportRxiv(entry: dict) -> dict:
+    printDEBUG(1, "SportRxiv entry")
+    return _tag_as_preprint(entry, "sportrxiv", "sportrxiv", "SportRxiv")
+
+
+def handle_TechRxiv(entry: dict) -> dict:
     printDEBUG(1, "TechRxiv entry")
-    entry['ENTRYTYPE'] = "article"
-    entry['ID'] = entry['ID'] + "-techrxiv"
-    entry['journal'] = "TechRxiv"
-    entry['keywords'] = ''
-    entry['eprinttype'] = "TechRxiv"
-    return entry
+    return _tag_as_preprint(entry, "techrxiv", "TechRxiv", "TechRxiv")
 
-def handle_research_archive(entry):
+
+def handle_research_archive(entry: dict) -> dict:
     printDEBUG(1, "Research Archive of Rising Scholars entry")
-    entry['ENTRYTYPE'] = "article"
-    entry['ID'] = entry['ID'] + "-research-archive"
-    entry['journal'] = "research-archive"
-    entry['keywords'] = ''
-    entry['eprinttype'] = "Research Archive of Rising Scholars"
-    return entry
+    return _tag_as_preprint(
+        entry,
+        "research-archive",
+        "research-archive",
+        "Research Archive of Rising Scholars",
+    )
 
-def handle_zenodo(entry):
+
+def handle_zenodo(entry: dict) -> dict:
     printDEBUG(1, "Zenodo entry")
-    entry['ID'] = entry['ID'] + "-zenodo"
-    entry['ENTRYTYPE'] = "article"
-    entry['journal'] = "Zenodo"
-    entry['keywords'] = ''
-    entry['eprinttype'] = "zenodo"
+    _tag_as_preprint(entry, "zenodo", "Zenodo", "zenodo")
     entry['publisher'] = "Zenodo"
     return entry
 
-def handle_MDPI(entry):
-    printDEBUG(1, "\nThis is a paper by the MDPI editor: try to find the number of pages")
-    printDEBUG(1, "\tFecthing " + entry['url'])
-    # page = getContentFromURL(entry['url'])
-    # pdf_link = re.search(r'pdf_url" content="(.+)"', page)
-    # printDEBUG(1, "\tFound PDF link = " + pdf_link[1])
-    # response = requests.get(pdf_link[1])
-    # num_pages = len(PyPDF2.PdfReader(io.BytesIO(response.content)).pages)
-    num_pages = -1
-    pdf_link = get_fulltext_pdf_url_from_doi(entry['url'])
-    printDEBUG(1, "\tFound PDF link = " + pdf_link)
-    num_pages = get_pdf_page_count(pdf_link)
 
-    # Finally write the page count if any
+def _pdf_candidate_urls(doi: str) -> list[str]:
+    """Return candidate open-access PDF URLs for *doi*, without Selenium.
+
+    Sources tried in order:
+    1. CrossRef ``link`` field (publisher-deposited PDF).
+    2. Unpaywall OA locations (includes arXiv mirrors, institutional repos …).
+
+    Both APIs are free and require no credentials beyond a polite e-mail
+    address in the User-Agent / query string.
+    """
+    import io as _io   # already imported at top level but guard for clarity
+
+    ua = f"doi2bib/1.0 ({_CONTACT_EMAIL})"
+    urls: list[str] = []
+
+    # ── CrossRef ──────────────────────────────────────────────────────────
+    try:
+        cr = requests.get(
+            f"https://api.crossref.org/works/{doi}",
+            headers={"User-Agent": ua},
+            timeout=10,
+        )
+        cr.raise_for_status()
+        for link in cr.json()["message"].get("link", []):
+            u = link.get("URL", "")
+            if u:
+                urls.append(u)
+    except Exception as exc:
+        printDEBUG(1, f"\tCrossRef link lookup failed: {exc}")
+
+    # ── Unpaywall ─────────────────────────────────────────────────────────
+    try:
+        up = requests.get(
+            f"https://api.unpaywall.org/v2/{doi}",
+            params={"email": _CONTACT_EMAIL},
+            timeout=10,
+        )
+        up.raise_for_status()
+        for loc in up.json().get("oa_locations", []):
+            u = loc.get("url_for_pdf") or ""
+            if u:
+                urls.append(u)
+    except Exception as exc:
+        printDEBUG(1, f"\tUnpaywall lookup failed: {exc}")
+
+    # Deduplicate while preserving priority order
+    seen: set[str] = set()
+    result: list[str] = []
+    for u in urls:
+        if u not in seen:
+            seen.add(u)
+            result.append(u)
+    return result
+
+
+def _count_pdf_pages_from_url(url: str) -> int:
+    """Download *url* with plain ``requests`` and return the PDF page count.
+
+    Returns -1 if the URL is not reachable or does not return a valid PDF.
+    No browser or Selenium is involved.
+    """
+    import io as _io
+    try:
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            "Accept": "application/pdf,*/*",
+        }
+        r = requests.get(url, headers=headers, timeout=30, allow_redirects=True)
+        if r.status_code != 200:
+            printDEBUG(1, f"\t  HTTP {r.status_code} for {url}")
+            return -1
+        if not r.content[:4] == b"%PDF":
+            printDEBUG(1, f"\t  Not a PDF at {url}")
+            return -1
+        reader = PyPDF2.PdfReader(_io.BytesIO(r.content))
+        return len(reader.pages)
+    except Exception as exc:
+        printDEBUG(1, f"\t  Download failed for {url}: {exc}")
+        return -1
+
+
+def handle_MDPI(entry: dict) -> dict:
+    """Try to populate ``pages`` for MDPI papers by counting PDF pages.
+
+    Strategy
+    --------
+    1. Collect candidate PDF URLs via CrossRef and Unpaywall APIs — no
+       browser required.  Unpaywall often finds an arXiv mirror that
+       downloads cleanly even when the publisher site blocks bots.
+    2. Try each URL with plain ``requests`` + ``PyPDF2``.
+    3. Fall back to the original Selenium path (headless Chrome) if every
+       lightweight attempt fails.
+    """
+    printDEBUG(1, "\nThis is a paper by the MDPI editor: try to find the number of pages")
+    printDEBUG(1, "\tFetching candidate PDF URLs for " + entry['doi'])
+
+    num_pages = -1
+
+    # ── Lightweight path (no Selenium) ────────────────────────────────────
+    candidates = _pdf_candidate_urls(entry['doi'])
+    printDEBUG(1, f"\tFound {len(candidates)} candidate URL(s)")
+    for url in candidates:
+        printDEBUG(1, f"\t  Trying {url}")
+        num_pages = _count_pdf_pages_from_url(url)
+        if num_pages > 0:
+            printDEBUG(1, f"\t  Page count = {num_pages}")
+            break
+
+    # ── Selenium fallback ─────────────────────────────────────────────────
+    if num_pages < 1:
+        printDEBUG(1, "\tFalling back to Selenium for PDF download")
+        try:
+            pdf_link = get_fulltext_pdf_url_from_doi(entry['url'])
+            if pdf_link is not None:
+                printDEBUG(1, "\tFound PDF link (Selenium) = " + pdf_link)
+                num_pages = get_pdf_page_count(pdf_link)
+        except Exception as exc:
+            printDEBUG(1, f"\tSelenium fallback failed: {exc}")
+
     if num_pages > 0:
-         entry['pages'] = '1-' + str(num_pages)
-         printDEBUG(1, "\tFound page range = " + entry['pages'])
+        entry['pages'] = '1-' + str(num_pages)
+        printDEBUG(1, "\tFound page range = " + entry['pages'])
+    else:
+        print("WARNING: could not find the number of pages")
+
     return entry
 
-from requests_html import HTMLSession
-def handle_ACM(entry):
-    if 'pages' not in entry.keys() :
+
+def handle_ACM(entry: dict) -> dict:
+    """Scrape ``pages`` from the ACM landing page when missing."""
+    if 'pages' not in entry.keys():
         session = HTMLSession()
         resp = session.get(entry['url'])
-        # Run JavaScript code on webpage
-        resp.html.render()
+        resp.html.render()                     # execute JavaScript
         page = resp.html.html
-        if re.search(r'Pages ', page) : 
+        if re.search(r'Pages ', page):
             page_range_full = re.search(r'>Pages\s+\d+–\d+<', page)
-            page_range = re.search(r'\d+–\d+', page_range_full[0])
-            entry['pages'] = page_range[0]
+            page_range      = re.search(r'\d+–\d+', page_range_full[0])
+            entry['pages']  = page_range[0]
             printDEBUG(1, "Found page range = " + entry['pages'])
-        else : 
+        else:
             entry['pages'] = ""
 
-    return entry    
-    
-# -------------------------------------------------------------------------
-# The main function
-def get_entry(doi):
-    # Put a checkpoint
-    get_linenumber() 
+    return entry
 
+
+# Mapping ``DOI prefix -> preprint handler`` used by the main pipeline.
+PREPRINT_HANDLERS: List[Tuple[str, Callable[[dict], dict]]] = [
+    ("10.48550/", handle_arXiV),            # arXiv
+    ("10.1101/",  handle_bioRxiv),          # bioRxiv
+    ("10.58445/", handle_research_archive), # Research Archive of Rising Scholars
+    ("10.21203/", handle_PREPRINT),         # Research Square
+    ("10.20944/", handle_preprintMDPI),     # MDPI Preprints
+    ("10.31234/", handle_PsyArXiv),         # PsyArXiv
+    ("10.51224/", handle_sportRxiv),        # SportRxiv
+    ("10.2139/",  handle_ssrn),             # SSRN
+    ("10.36227/", handle_TechRxiv),         # TechRxiv
+    ("10.5281/",  handle_zenodo),           # Zenodo
+]
+
+
+# ===========================================================================
+# KEY / TITLE UTILITIES
+# ===========================================================================
+
+# LaTeX-accent noise that must be stripped from the generated BibTeX key.
+_KEY_REPLACEMENTS: List[Tuple[str, str]] = [
+    (' ',  ''),   (':',  ''),   (',',  ''),   ('-',  ''),
+    ('\u2019', ''), ('\"', ''),  ("'",  ''),
+    ("{\\a}",   'a'), ("{\\`a}", 'a'), ("{\\~a}", 'a'), ("{\\aa}", 'a'),
+    ("{\\c}",   'c'), ("{\\cc}", 'c'),
+    ("{\\e}",   'e'), ("{\\'e}", 'e'), ("{\\`e}", 'e'),
+    ('{\\i}',   'i'), ('{\\\\i}', 'i'),
+    ('{\\"o}',  'o'), ('{\\o}',   'o'),
+    ('{\\u}',   'u'), ('\\U',     'U'),
+    ('{\\vc}',  'c'),
+    ('{\\.z}',  'z'),
+]
+
+
+def _sanitize_key(key: str) -> str:
+    """Strip whitespace, punctuation and LaTeX accents from a BibTeX key."""
+    for needle, repl in _KEY_REPLACEMENTS:
+        key = key.replace(needle, repl)
+    return key
+
+
+def _clean_title(title: str) -> str:
+    """Basic title clean-up that must happen before the key is built from it."""
+    replacements = [
+        ("{",              ''),
+        ("}",              ''),
+        ("\\textendash ",  '-'),
+        ("\\textendash",   '-'),
+        ("\\textemdash",   ' --- '),
+        ("\\textdollar",   '$'),
+        ('&amp;',          '&'),          # see 10.1109/access.2021.3108565
+        ("  ",             ' '),
+    ]
+    for src, dst in replacements:
+        title = title.replace(src, dst)
+    return title
+
+
+def _build_bibtex_key(entry: dict) -> str:
+    """
+    Compose a readable BibTeX key: ``AuthorYEARFirstTitleWord`` (with a second
+    title word appended when the first one is too short).
+    """
+    entry['title'] = _clean_title(entry['title'])
+
+    first_author_lastname = entry['author'].split(",")[0]
+    first_title_word      = entry['title'].split()[0]
+    new_key = first_author_lastname + entry['year'] + first_title_word
+
+    # Extend the key if the first title word is too short (length <= 3).
+    if len(first_title_word) <= 3:
+        printDEBUG(1, "Current ID of this entry (" + new_key + ") is too short")
+        words = entry['title'].split()
+        # BUGFIX: the original checked ``len(words) >= 1`` but then indexed
+        # ``words[1]``, which crashes when the title contains a single word.
+        # We now correctly require at least two words before appending one.
+        if len(words) >= 2:
+            new_key = new_key + words[1].capitalize()
+        else:
+            printDEBUG(1, "Current title is too short to add some extra content")
+
+    return _sanitize_key(new_key)
+
+
+# ===========================================================================
+# FUZZY ABBREVIATION MATCHING
+# ===========================================================================
+
+def _best_match(name: str, abbr: Dict[str, str]) -> Tuple[float, str]:
+    """Return ``(best_ratio, best_key)`` of the best Levenshtein match for *name*."""
+    best_ratio = 0.0
+    best_key   = ''
+    for k, v in abbr.items():
+        ratio = lev.ratio(name, v)
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_key   = k
+    return best_ratio, best_key
+
+
+def _abbreviate_field(entry: dict,
+                      field_name: str,
+                      abbr: Dict[str, str],
+                      threshold: float,
+                      *,
+                      warn_below: Optional[float] = None) -> None:
+    """
+    If ``entry[field_name]`` is close enough to one of the values in *abbr*,
+    replace it with the matching key.
+
+    * *threshold* is the minimum Levenshtein ratio required;
+    * below *warn_below* a visible message is printed so the user can verify
+      the substitution manually.
+    """
+    if field_name not in entry:
+        return
+    name = entry[field_name]
+    best_ratio, best_key = _best_match(name, abbr)
+    if best_ratio > threshold:
+        printDEBUG(2, "Changing " + name + " by ")
+        printDEBUG(2, abbr[best_key])
+        if warn_below is not None and best_ratio < warn_below:
+            print(
+                "\nVERIFY if correct: substituting\n\t"
+                + name + " by\n\t " + abbr[best_key]
+            )
+        entry[field_name] = best_key
+
+
+# ===========================================================================
+# SPRINGER / SPIE / IOP / IEEE / ELSEVIER POST-PROCESSING
+# ===========================================================================
+
+# Springer series whose entries are actually conference proceedings.
+_SPRINGER_SERIES_MARKERS: List[str] = [
+    "aisc", "acvpr", "ccis", "ecpsci", "isrl", "lais", "lncs",
+    "lncvb", "lndect", "lnee", "lnicst", "lnns", "mimb", "ust",
+    "sist", "springer-series-sbd",
+]
+
+# First-pass hints discovered by scanning the Springer landing page.
+# Format: (marker-in-HTML, target-field, value, log-friendly name)
+_SPRINGER_PAGE_HINTS: List[Tuple[str, str, str, str]] = [
+    ("series (ACVPR)", "journal", "acvpr",                "ACVPR"),
+    ("AISC,volume",    "series",  "aisc",                 "AISC"),
+    ("CCIS,volume",    "journal", "ccis",                 "CCIS"),
+    ("ECPSCI,volume",  "journal", "ecpsci",               "ECPSCI"),
+    ("ISRL,volume",    "journal", "isrl",                 "ISRL"),
+    ("LAIS,volume",    "journal", "lais",                 "LAIS"),
+    ("LNCS,volume",    "journal", "lncs",                 "LNCS"),
+    ("LNEE,volume",    "series",  "lnee",                 "LNEE"),
+    ("LNNS,volume",    "series",  "lnns",                 "LNNS"),
+    ("SBD,volume",     "series",  "springer-series-sbd",  "SBD"),
+]
+
+
+def _is_springer_series(entry: dict) -> bool:
+    """True iff the ``journal`` field matches a known Springer series or a
+    ``series`` field has already been populated upstream."""
+    if 'journal' not in entry:
+        return 'series' in entry
+    j = entry['journal']
+    if any(marker in j for marker in _SPRINGER_SERIES_MARKERS):
+        return True
+    return 'series' in entry
+
+
+def _handle_springer(entry: dict) -> None:
+    """In-place fix-up for Springer DOIs (``10.1007/...``)."""
+    if 'journal' not in entry or entry['doi'].find("10.1007/") <= -1:
+        return
+
+    printDEBUG(1, "\nSpringer editor: check if this article is within a series\n")
+    printDEBUG(1, entry)
+
+    # ---- First scan: detect the series from the landing page --------------
+    page = getContentFromURL(entry['url'])
+    for marker, target_field, value, name in _SPRINGER_PAGE_HINTS:
+        if marker in page:
+            printDEBUG(1, "\t" + name + " series detected")
+            entry[target_field] = value
+
+    # ---- Second scan: MIMB is tested separately (historical) --------------
+    page = getContentFromURL(entry['url'])
+    if "MIMB, volume" in page:
+        printDEBUG(1, "\tMIMB series detected")
+        entry['journal'] = "mimb"
+
+    # ---- Only continue if this really is a series entry -------------------
+    if not _is_springer_series(entry):
+        return
+
+    printDEBUG(1, "Springer editor: changing entry type from article to inproceedings")
+    printDEBUG(1, " Found series = " + entry['journal'])
+
+    entry['ENTRYTYPE'] = "inproceedings"
+    entry.setdefault('publisher', "springer")
+    entry.setdefault('series',    entry['journal'])
+    entry['keywords'] = ''
+
+    # ---- Third scan: extract booktitle / volume ---------------------------
+    page = getContentFromURL(entry['url'])
+
+    m = re.search(r'(citation_conference_title\"\scontent)=\"(.+)\"', page)
+    if m:
+        entry['booktitle'] = m[2]
+        jabbr = journal_abbrev(entry['booktitle'])
+        if jabbr != entry['booktitle']:
+            entry['shortjournalproceedings'] = jabbr
+        volume_match = re.search(r'(volume\s)(\d+)', page)
+        entry['volume'] = volume_match.group(2)
+    else:
+        entry['booktitle'] = entry['journal']
+        entry.setdefault('volume', '')
+
+    del entry['journal']
+
+    # ---- Series-specific corrections --------------------------------------
+    series = entry['series']
+
+    if "ECCV" in series:
+        entry['series']    = "lncs"
+        entry['booktitle'] = "eccv"
+
+    get_linenumber()
+    if "isrl" in series:
+        entry['series']    = "springer-series-isrl"
+        entry['ENTRYTYPE'] = "inbook"
+        # BUGFIX: the original used two different regexes - ``(.+)\)`` as the
+        # guard and ``(.+)\)\)`` for the extraction - which crashed when the
+        # guard matched but the extraction did not.  We now ``search`` once
+        # and use the (single, consistent) match object.
+        volume_match = re.search(r'ISRL,volume (.+)\)', page)
+        if volume_match:
+            printDEBUG(1, "\t try to find the volume number")
+            entry['volume'] = volume_match.group(1)
+        get_linenumber()
+        booktitle_match = re.search(r'inbook_title" content="([^"]+)"', page)
+        if booktitle_match:
+            printDEBUG(1, "\t try to find the right book title")
+            entry['booktitle'] = booktitle_match.group(1)
+
+    if "LNEE,volume" in page:
+        printDEBUG(1, "   found LNEE series")
+        entry['series'] = 'lnee'
+        volume_match = re.search(r'LNEE,volume (.+)\)', page)
+        if volume_match:
+            printDEBUG(1, "\t try to find the volume number")
+            entry['volume'] = volume_match.group(1)
+
+    if "LNCVB,volume" in page:
+        printDEBUG(1, "   found LNCVB series")
+        volume_match = re.search(r'LNCVB,volume (.+)\)', page)
+        if volume_match:
+            printDEBUG(1, "\t try to find the volume number")
+            entry['volume'] = volume_match.group(1)
+        # BUGFIX: the booktitle extraction assumed the regex always matched and
+        # crashed otherwise; we now only assign when a match is found.
+        booktitle_match = re.search(r'(citation_inbook_title\"\scontent)=\"(.+)\"', page)
+        if booktitle_match:
+            entry['booktitle'] = booktitle_match[2]
+
+    if "SBD,volume" in page:
+        printDEBUG(1, "   found SBD series")
+        volume_match = re.search(r'SBD,volume (.+)\)', page)
+        if volume_match:
+            printDEBUG(1, "\t try to find the volume number")
+            entry['volume'] = volume_match.group(1)[:-1]   # strip trailing ')'
+
+    printDEBUG(1, "Springer editor: changing entry type from article to inproceedings - done")
+
+
+def _handle_spie(entry: dict) -> None:
+    """In-place fix-up for SPIE Proceedings DOIs (``10.1117/...``)."""
+    is_spie = (
+        entry['doi'].find("10.1117/") > -1
+        and 'booktitle' not in entry
+        and entry['doi'].find("jei") <= -1
+    )
+    if not is_spie:
+        return
+
+    printDEBUG(1, "Found SPIE entry wrongly considered as a journal instead of proceedings")
+    entry['ENTRYTYPE'] = "inproceedings"
+    entry['booktitle'] = entry['journal']
+    printDEBUG(1, "\tdeleting journal entry")
+    del entry['journal']
+    entry['publisher'] = "SPIE"
+    entry['series']    = "pspie"
+    entry['keywords']  = ''
+    get_linenumber()
+
+    page = getContentFromURL(entry['url'])
+    re.search(r'\d+', page)                                  # preserved (no-op)
+    volume_match = re.search(r'citation_volume\"\scontent=\"(.+)\"', page)
+    get_linenumber()
+    # BUGFIX: guard against a missing ``citation_volume`` meta tag instead of
+    # unconditionally calling ``.group(1)`` (which would raise AttributeError).
+    if volume_match:
+        entry['volume'] = volume_match.group(1)
+    get_linenumber()
+
+
+def _handle_iop(entry: dict) -> None:
+    """In-place fix-up for IOP Publishing DOIs (``10.1088/...``)."""
+    if entry['doi'].find("10.1088/") <= -1:
+        return
+
+    printDEBUG(1, "Found IOP publisher -> check for article Conference Series")
+    if 'booktitle' not in entry:
+        return
+
+    if 'Conference Series' in entry['booktitle']:
+        printDEBUG(1, "Found IOP Conference Series")
+        entry['series'] = "jpcs"
+
+    # These are intentionally left for manual inspection by the user.
+    entry['booktitle'] = "CHECK THIS BY HAND"
+    entry['pages']     = "CHECK THIS BY HAND"
+    for stale in ('number', 'address', 'shortjournalproceedings'):
+        if stale in entry:
+            del entry[stale]
+
+
+def _handle_ieee(entry: dict) -> None:
+    """Fill in missing ``pages`` / ``address`` for IEEE conferences (``10.1109/...``)."""
+    is_ieee_conf = (
+        entry['doi'].find("10.1109/") > -1
+        and 'booktitle' in entry
+    )
+    if not is_ieee_conf:
+        return
+    printDEBUG(1, "\nThis is an IEEE conference")
+
+    # 1. Extract the start / end pages from the landing page ----------------
+    if 'pages' not in entry or len(entry['pages']) < 1:
+        printDEBUG(1, "\tTry to find missing pages of an IEEE conference")
+        page = getContentFromURL(entry['url'])
+        if re.search(r'startPage', page) and re.search(r'endPage', page):
+            start = re.search(r'startPage\":\"(\d+)\"', page)
+            end   = re.search(r'endPage\":\"(\d+)\"',   page)
+            printDEBUG(2, start)
+            printDEBUG(2, end)
+            entry['pages'] = start[1] + "-" + end[1]
+            if DEBUG >= 1:
+                print("\tFound page range = " + entry['pages'])
+        else:
+            printDEBUG(1, "\tCould not find missing page range")
+
+    # 2. Extract the conference location ------------------------------------
+    if 'address' not in entry or len(entry['address']) < 1:
+        printDEBUG(1, "\tTry to find missing conference location of an IEEE conference")
+        page = getContentFromURL(entry['url'])
+        if re.search(r'confLoc', page):
+            printDEBUG(1, "\tTrying to extract the confLoc data")
+            loc = re.search(r'confLoc\":\"([\w,\s]+)\"', page)
+            if loc:
+                entry['address'] = loc[1]
+                printDEBUG(1, "\tFound conference location = " + entry['address'])
+            else:
+                printDEBUG(1, "\tCould not find conference location")
+
+
+def _handle_elsevier(entry: dict) -> None:
+    """Attempt to fix the ``pages`` field for Elsevier DOIs (``10.1016/...``)."""
+    looks_like_bad_pages = (
+        entry['doi'].find("10.1016/") > -1
+        and 'pages' in entry
+        and entry['pages'].find("-") < 1
+    )
+    if not looks_like_bad_pages:
+        return
+
+    printDEBUG(
+        1,
+        "\nThis is a paper by the Elsevier editor and try to find the page "
+        "range instead of the article number",
+    )
+    getContentFromURL(entry['url'])         # side-effect only, preserved for parity
+    printDEBUG(
+        1,
+        "\tAt the present time, the script is not able to replace the article "
+        "number by the page range, due to javascript issues. Sorry...",
+    )
+
+
+# ===========================================================================
+# FINAL BIBTEX FORMATTING
+# ===========================================================================
+
+# Month string-to-literal substitution (bibtexparser would otherwise keep braces)
+_MONTH_CAPITALISATION: Dict[str, str] = {
+    '{jan}': 'Jan', '{feb}': 'Feb', '{mar}': 'Mar', '{apr}': 'Apr',
+    '{may}': 'May', '{jun}': 'Jun', '{jul}': 'Jul', '{aug}': 'Aug',
+    '{sep}': 'Sep', '{oct}': 'Oct', '{nov}': 'Nov', '{dec}': 'Dec',
+    '{january}': 'Jan', '{february}': 'Feb', '{march}': 'Mar', '{april}': 'Apr',
+    '{june}': 'Jun', '{july}': 'Jul', 'july': 'Jul', '{august}': 'Aug',
+    '{september}': 'Sep', '{october}': 'Oct', '{november}': 'Nov', '{december}': 'Dec',
+}
+
+# Misc. string clean-ups applied to the final serialised entry.
+_FINAL_STRING_FIXES: List[Tuple[str, str]] = [
+    ('\\textendash ', '-'),
+    ('<title>',       ''),
+    ('</title>',      ''),
+    ('\u2019',        '\''),             # bad apostrophe
+]
+
+# Deterministic field order in the emitted BibTeX record.
+_BIBTEX_FIELD_ORDER: Tuple[str, ...] = (
+    'ENTRYTYPE', 'title', 'author', 'journal', 'booktitle',
+    'shortjournalproceedings', 'howpublished', 'series', 'volume', 'number',
+    'pages', 'month', 'year', 'institution', 'school', 'publisher',
+    'eprint', 'address', 'editor', 'keywords', 'eprinttype', 'doi', 'url',
+)
+
+
+def _strip_braces_around_strings(bibtex_str: str, abbr: Dict[str, str]) -> str:
+    """Remove the braces that ``bibtexparser`` wraps around ``@string`` names."""
+    for abbr_key in abbr:
+        bibtex_str = bibtex_str.replace(
+            '= {' + str(abbr_key) + '}',
+            '= '  + str(abbr_key),
+        )
+    return bibtex_str
+
+
+def _brace_special_words_in_title(bibtex_str: str) -> str:
+    """Re-brace words like ``2D`` or ``Gaussian`` on the *title* line only."""
+    lines = bibtex_str.split('\n')
+    title_line = lines[1]
+    if 'title = ' not in title_line:
+        return bibtex_str
+
+    new_title = title_line
+    for item in ACRONYMS + MULTI_D + PROPER_NAMES + ALGORITHMS + CITIES + COUNTRIES:
+        new_title = new_title.replace(item, "{" + item + "}")
+    return bibtex_str.replace(title_line, new_title)
+
+
+def _format_as_bibtex(db, abbr: Dict[str, str]) -> str:
+    """Serialise *db* to a canonical BibTeX string ready to be printed."""
+    writer = BibTexWriter()
+    writer.indent         = '\t'
+    writer.display_order  = _BIBTEX_FIELD_ORDER
+    bibtex_str = bibtexparser.dumps(db, writer)
+
+    # Month literals
+    for src, dst in _MONTH_CAPITALISATION.items():
+        bibtex_str = bibtex_str.replace(src, dst)
+
+    # Remove {} around any @string name
+    bibtex_str = _strip_braces_around_strings(bibtex_str, abbr)
+
+    # Small string clean-ups
+    for src, dst in _FINAL_STRING_FIXES:
+        bibtex_str = bibtex_str.replace(src, dst)
+
+    # Add braces around acronyms / names / etc. on the title line
+    bibtex_str = _brace_special_words_in_title(bibtex_str)
+    return bibtex_str
+
+
+# ===========================================================================
+# CORE PIPELINE
+# ===========================================================================
+
+def _fetch_raw_bibtex(doi: str) -> str:
+    """Retrieve the raw BibTeX payload for *doi* from ``doi.org``."""
     url = f"https://doi.org/{doi}"
     printDEBUG(1, "Fetching " + url)
 
-    raw = requests.get(url, \
-        headers={'Accept':'text/x-bibliography;style=bibtex'}, timeout=200)  # // before 2022-10-27
-        # The next version works better but author are encoded in a wrong way, that is
-        # "John Doe and" ... instead of "Doe, John and" which causes a series of problems...
-        # headers={'Accept':'application/x-bibtex; charset=utf-8'}, timeout=200) # Seems to work better...
-    
+    raw = requests.get(
+        url,
+        headers={'Accept': 'text/x-bibliography;style=bibtex'},
+        timeout=200,
+    )
+
     if raw.status_code != 200:
-        print("The returned status code of the metadata server is wrong: " + str(raw.status_code) + " instead of 200")
+        print(
+            "The returned status code of the metadata server is wrong: "
+            + str(raw.status_code) + " instead of 200"
+        )
     else:
-        printDEBUG(1, "\treturn code of the fetched metadata is ok (" + str(raw.status_code) + "); proceeding with analysis")
+        printDEBUG(
+            1,
+            "\treturn code of the fetched metadata is ok ("
+            + str(raw.status_code) + "); proceeding with analysis",
+        )
         printDEBUG(2, "Raw content is " + raw.content.decode('utf-8'))
 
-    if raw.ok and raw.status_code == 200:
-        parser = BibTexParser()
-        parser.customization = homogenize_latex_encoding
-        parser.common_strings = True
-        content = raw.content.decode('utf-8')
-        if doi.find("10.48550/") > -1:  # Problem with some ID fields with arXiv
-            content = re.sub("{(.*), title", "{IDToBeReplaced, title", content)
+    if not (raw.ok and raw.status_code == 200):
+        raise Exception(
+            "Could not get data for \"%s\" from CrossRef (status code)" %
+            (url, raw.status_code)
+        )
+    return raw.content.decode('utf-8')
 
-        # Sometimes keys contain spaces (see 10.58119/ULG/H5SP5P ) ...
-        # Still need some code to handle that
 
-	# Some references encode month if the form of "month=sep" instead of "month={sep}" // See 10.1109/ICRCV59470.2023.10329030
-        content = re.sub("month=([a-z]+)", "month={\\1}", content)
+def _parse_bibtex(content: str, doi: str):
+    """Return a ``BibDatabase`` parsed from *content* with a few quirks applied."""
+    parser = BibTexParser()
+    parser.customization  = homogenize_latex_encoding
+    parser.common_strings = True
 
-        db = bibtexparser.loads(content, parser=parser)
-        if len(db.entries) >= 1: 
-            entry = db.entries[0]
-        else :
-            print("\nRaw content is " + content + "\n")
-            print("This is a missformed BiBTeX entry... exiting")
-            exit()
+    get_linenumber()
+    # Some arXiv IDs contain spaces -> replace the key by a placeholder.
+    if doi.find("10.48550/") > -1:
+        content = re.sub("{(.*), title", "{IDToBeReplaced, title", content)
 
-        printDEBUG(1, "Just fetched: ")
-        printDEBUG(1, entry)
-        if DEBUG >= 1:
-           get_linenumber()
+    # Some IEEE references encode ``month=sep`` instead of ``month={sep}``.
+    # See 10.1109/ICRCV59470.2023.10329030.
+    content = re.sub("month=([a-z]+)", "month={\\1}", content)
 
-        # Reorganize the authors "field" if necessary
-        entry['author'] = organize_authors(entry['author'])
+    get_linenumber()
+    content = re.sub("month=June", "month=Jun", content)
+    content = re.sub("month=July", "month=Jul", content)
+    content = re.sub("month=Sept", "month=Sep", content)
 
-        # Remove {} around all first letters in title
-        entry['title'] = re.sub(r'\{', '', entry['title'])
-        entry['title'] = re.sub(r'\}', '', entry['title'])
-        
-        # Correct the url derived from the doi as given by crossref... This should not happen..?
-        if 'url' in entry.keys():
-            entry['url'] = re.sub(r'http://dx.doi.org', 'https://doi.org', entry['url'])
+    db = bibtexparser.loads(content, parser=parser)
+    if len(db.entries) >= 1:
+        return db
 
-        # Find abbreviation
-        if 'journal' in entry.keys():
-            journalName = entry['journal']
-            if journalName.find('&amp;') != -1:
-                printDEBUG(1, "Replacing &amp by & in the journal name")
-                journalName = journalName.replace('&amp;','&')
-                entry['journal'] = journalName 
-            jabbr = journal_abbrev(entry['journal'])
-            if jabbr != entry['journal']:
-                entry['shortjournalproceedings'] = jabbr
+    print("\nRaw content is " + content + "\n")
+    print("This is a missformed BiBTeX entry... exiting")
+    exit()
 
-        # Check if the entry is not wrongly assigned as journal although it is a conference or a workshop
-        # Crossref is not always well formatted
-        if 'journal' in entry.keys():
-            if entry['journal'].find("onference") != -1 or entry['journal'].find("orkshop") != -1:
-                entry['ENTRYTYPE'] = "inproceedings"
-                entry['booktitle'] = entry['journal']
-                del entry['journal'] 
-                if entry.get('address') is None:
-                   entry['address'] = ''
 
-        if 'month' in entry.keys():
-            month = entry['month'].lower()
-            # Ajout MVD
-            # month = month.strip().capitalize()
-            entry['month'] = month
-        raw_result = bibtexparser.dumps(db).strip()
-        lines = []
+def _normalise_base_entry(entry: dict) -> None:
+    """Cleanup operations that happen on every entry, regardless of publisher."""
+    # Authors -----------------------------------------------------------------
+    entry['author'] = organize_authors(entry['author'])
 
-        # First element is always the ID key
-        # MyString = []
-        # MyString = raw_result.splitlines()
-        # firstline = MyString[0]
-        # MyString.pop(0)
+    # Title: drop the leading { and trailing } around capitalised letters -----
+    entry['title'] = re.sub(r'\{', '', entry['title'])
+    entry['title'] = re.sub(r'\}', '', entry['title'])
 
-        # We modify the ID key to standardize it 
-        if not 'year' in entry.keys():
-            print("Problem: no year in the fields of doi")
-            print(entry)
-        else: 
-            oldkey = str(entry['ID'])
-            # Some title cleaning
-            entry['title'] = entry['title'].replace("{",'')
-            entry['title'] = entry['title'].replace("}",'')
-            entry['title'] = entry['title'].replace("\\textendash ",'-')
-            entry['title'] = entry['title'].replace("\\textendash",'-')
-            entry['title'] = entry['title'].replace("\\textemdash",' --- ')
-            entry['title'] = entry['title'].replace("\\textdollar",'$')
-            entry['title'] = entry['title'].replace('&amp;','&')  # see 10.1109/access.2021.3108565
-            entry['title'] = entry['title'].replace("  ",' ')
+    # Crossref occasionally returns ``http://dx.doi.org`` instead of HTTPS.
+    if 'url' in entry:
+        entry['url'] = re.sub(r'http://dx.doi.org', 'https://doi.org', entry['url'])
 
-            newKey = entry['author'].split(",")[0] + entry['year'] + entry['title'].split()[0]
+    # Journal -----------------------------------------------------------------
+    if 'journal' in entry:
+        if '&amp;' in entry['journal']:
+            printDEBUG(1, "Replacing &amp by & in the journal name")
+            entry['journal'] = entry['journal'].replace('&amp;', '&')
 
-            # Check to see if the key is not too short
-            if len(entry['title'].split()[0])<=3 :
-                printDEBUG(1, "Current ID of this entry (" + newKey + ") is too short")
-                if len(entry['title'].split()) >=1 : 
-                    newKey = newKey + entry['title'].split()[1].capitalize()
-                else:
-                    printDEBUG(1, "Current title is too short to add some extra content")
+        jabbr = journal_abbrev(entry['journal'])
+        if jabbr != entry['journal']:
+            entry['shortjournalproceedings'] = jabbr
 
-            # Clean up the author name (accent, space, -, etc)
-            newKey = newKey.replace(' ','')
-            newKey = newKey.replace(':','')
-            newKey = newKey.replace(',','')
-            newKey = newKey.replace('-','')
-            newKey = newKey.replace('’','')
-            newKey = newKey.replace('\"','')
-            newKey = newKey.replace('\'','')
-            newKey = newKey.replace("{\\a}",'a')
-            newKey = newKey.replace("{\\`a}",'a')
-            newKey = newKey.replace("{\\~a}",'a')
-            newKey = newKey.replace("{\\aa}",'a')
-            newKey = newKey.replace("{\\c}",'c')
-            newKey = newKey.replace("{\\cc}",'c')
-            newKey = newKey.replace("{\\e}",'e')
-            newKey = newKey.replace("{\\'e}",'e')
-            newKey = newKey.replace("{\\`e}",'e')
-            newKey = newKey.replace('{\\"o}','o')
-            newKey = newKey.replace('{\\o}','o')
-            newKey = newKey.replace('{\\u}','u')
-            newKey = newKey.replace('\\U','U')
-            newKey = newKey.replace('{\\vc}','c')
-            newKey = newKey.replace('{\\.z}','z')
-            # firstline = firstline.replace(oldkey, newKey) 
-            # content = content + [firstline]
-            printDEBUG(1, "Replacing ID key " + oldkey + " by " + newKey)
-            entry['ID'] = newKey 
-        
-        printDEBUG(2, "Before processing but after changing the ID key")
-        printDEBUG(2, entry)
-
-        # Look for the title
-        # indexNumber = -1
-        # for index in range(len(MyString)):
-        #     if bool("title" in MyString[index] ): 
-        #         indexNumber = index
-
-        # if indexNumber >= 0: 
-             # content = content + [MyString[indexNumber]]
-        #      MyString.pop(indexNumber)
-
-        # Look for the author
-        # indexNumber = -1
-        # for index in range(len(MyString)):
-        #     if bool("author" in MyString[index] ): 
-        #         indexNumber = index
-
-        # if indexNumber >= 0: 
-             # content = content + [MyString[indexNumber]]
-        #      MyString.pop(indexNumber)
-
-        # print(MyString)
-        # for index in range(len(MyString)):
-             # content = content + [MyString[index]]
-
-        # for line in raw_result.splitlines():
-        # for line in content:
-        #     match = MONTH_RE.match(line)
-        #     if match:
-        #         if line.strip().endswith(","):
-        #             line = " month = %s," % match.group(1)
-        #         else:
-        #             line = " month = %s" % match.group(1)
-        #         # Ajout MVD
-        #         line = ' ' + line[1:9] + line[9].upper() + line[10:]
-        #     # Ajout MVD
-        #     line = re.sub(r"\s+", '\t', line, 1)
-        #     lines.append(line)
-
-        # Check for some STRINGS in the journal / proceedings / series etc
-        # Reads the bibtex file with abbreviations
-        with open(path_to_file_abbreviation) as bibtex_abbreviation_file:
-            bib_database_abbr = bibtexparser.load(bibtex_abbreviation_file)
-        abbr = bib_database_abbr.strings
-        # for abbr_key, abbr_text in abbr.items():
-        #     abbr_text = abbr_text.replace("IEEE ", "") 
-
-        # Sanitization
-        # Modify some specificities of the content to clean it
-        entry['doi'] = entry['doi'].replace("\\", "")
-        entry['url'] = entry['url'].replace("\\", "")
-        entry['title'] = entry['title'].replace("\\textquotesingle ", "'")
-        entry['title'] = entry['title'].replace("\\textquotedblleft", "``")
-        entry['title'] = entry['title'].replace("\\textquotedblright", "''")
-        entry['title'] = entry['title'].replace("\n", "")
-        entry['title'] = entry['title'].replace("\\&lt;title\\&gt;", "")   # Specific to very old SPIE proceedings
-        entry['title'] = entry['title'].replace("\\&lt;/title\\&gt;", "")  # Specific to very old SPIE proceedings
-
-        # Add {} around uppercases that are not at the beginning of a word
-        # for item in re.findall('\w+[A-Z]+\w+|[A-Z][A-Z]+|\w+\-\w+\-[A-Z]\w+|\w+\-[A-Z]+\w+', entry['title']):
-        for item in re.findall(r'\w+[A-Z]+\w+|[A-Z][A-Z]+', entry['title']):
-             entry['title'] = entry['title'].replace(item,"{" + item + "}")
-        # Remove some of the useless keys
-        if 'abstractnote' in entry.keys():    
-            del entry['abstractnote'] 
-        if 'issn' in entry.keys():
-            del entry['issn'] 
-        if 'isbn' in entry.keys():
-            del entry['isbn'] 
-        # Always add a keywords key
-        if not 'keywords' in entry.keys():
-            entry['keywords'] = ''
-
-        # Check for abbreviated journal title
-        best_ratio = 0
-        best_key = ''
-        best_value = ''
-        journal_abbr = 0
-        
-        if 'journal' in entry.keys():
-            name = entry['journal']
-            # First try to find the best match
-            for abbr_key, abbr_text in abbr.items():
-                ratio = lev.ratio(name, abbr_text)
-                if ratio > best_ratio:
-                    printDEBUG(1, "Current best match for [" + name + "]: " + abbr_text + " ( " + abbr_key + ") -> " + str(ratio))
-                    best_ratio = ratio
-                    best_key = abbr_key
-                    best_value = abbr_text
-        # We have found the best match 
-        if best_ratio > 0.95 or ( best_ratio > 0.8 and len(abbr[best_key]) > 40 ):
-            printDEBUG(2, "Changing " + name + " by ")
-            printDEBUG(2, abbr[best_key])
-            if best_ratio < 0.98: 
-                print("\nIMPORTANT NOTE -- VERIFY if this is correct: substituting\n\t" + name + " by\n\t " + abbr[best_key])
-            entry['journal'] = best_key    
-            journal = 1
-            if 'shortjournalproceedings' in entry.keys():
-                del entry['shortjournalproceedings'] 
-
-        # Put a checkpoint
-        get_linenumber() 
-
-        # Check if it is not a Springer LNCS/LNCS/AISC, etc. series
-        if ('journal' in entry.keys()) and (entry['doi'].find("10.1007/") > -1) :
-
-            printDEBUG(1, "\nSpringer editor: check if this article is within a series\n")
-            printDEBUG(1, entry)
-            
-            # Some hooks for detecting a series (because Springer's encoding is so poor...)
-            page = getContentFromURL(entry['url'])
-            if page.find("series (ACVPR)") > -1:
-               printDEBUG(1, "\tACVPR series detected")
-               entry['journal'] = "acvpr"
-            if page.find("AISC,volume") > -1:
-               printDEBUG(1, "\tAISC series detected")
-               entry['series'] = "aisc"
-            if page.find("CCIS,volume") > -1:
-               printDEBUG(1, "\tCCIS series detected")
-               entry['journal'] = "ccis"
-            if page.find("ECPSCI,volume") > -1:
-               printDEBUG(1, "\tECPSCI series detected")
-               entry['journal'] = "ecpsci"
-            if page.find("LAIS,volume") > -1:
-               printDEBUG(1, "\tLAIS series detected")
-               entry['journal'] = "lais"
-            if page.find("LNCS,volume") > -1:
-               printDEBUG(1, "\tLNCS series detected")
-               entry['journal'] = "lncs"
-            if page.find("LNEE,volume") > -1:
-               printDEBUG(1, "\tLNEE series detected")
-               entry['series'] = "lnee"
-            if page.find("LNNS,volume") > -1:
-               printDEBUG(1, "\tLNNS series detected")
-               entry['series'] = "lnns"
-
-            # Some hooks for detecting a series (because Springer's encoding is so poor...)
-            page = getContentFromURL(entry['url'])
-            if page.find("MIMB, volume") > -1:
-               printDEBUG(1, "\tMIMB series detected")
-               entry['journal'] = "mimb"
-
-            # Check for LNCS / AISC / CCIS / etc entries
-            if entry['journal'].find("aisc") > -1 or \
-               entry['journal'].find("acvpr") > -1 or \
-               entry['journal'].find("ccis") > -1 or \
-               entry['journal'].find("ecpsci") > -1 or \
-               entry['journal'].find("lais") > -1 or \
-               entry['journal'].find("lncs") > -1 or \
-               entry['journal'].find("lncvb") > -1 or \
-               entry['journal'].find("lndect") > -1 or \
-               entry['journal'].find("lnee") > -1 or \
-               entry['journal'].find("lnicst") > -1 or \
-               entry['journal'].find("lnns") > -1 or \
-               entry['journal'].find("mimb") > -1 or \
-               entry['journal'].find("ust") > -1 or \
-               entry['journal'].find("sist") > -1 or \
-               'series' in entry.keys() :
-
-                   # Generic changes 
-                   printDEBUG(1, "Springer editor: changing entry type from article to inproceedings")
-                   printDEBUG(1, " Found series = " + entry['journal']) 
-
-                   entry['ENTRYTYPE'] = "inproceedings"
-                   if not 'publisher' in entry.keys():
-                       entry['publisher'] = "springer"
-                   if not 'series' in entry.keys():
-                       entry['series'] = entry['journal']
-                   entry['keywords'] = ''
-
-                   # Fetch the content of the page
-                   page = getContentFromURL(entry['url'])
-
-                   # Generic booktitle and volume number fetching
-                   if re.search(r'(citation_conference_title\"\scontent)=\"(.+)\"', page):
-                       bookTitleText = re.search(r'(citation_conference_title\"\scontent)=\"(.+)\"', page)
-                       entry['booktitle'] = bookTitleText[2]
-                       jabbr = journal_abbrev(entry['booktitle'])
-                       if jabbr != entry['booktitle']:
-                           entry['shortjournalproceedings'] = jabbr
-                       volumeText = re.search(r'(volume\s)(\d+)', page)
-                       entry['volume'] = volumeText.group(2)
-                   else :
-                       entry['booktitle'] = entry['journal'] 
-                       if not 'volume' in entry.keys():
-                           entry['volume'] = ''
-
-                   del entry['journal'] 
-
-                   # Corrections specific to ECCV
-                   if entry['series'].find("ECCV") > -1: 
-                       entry['series'] = "lncs"
-                       entry['booktitle'] = "eccv"
-
-                   # Corrections specific to LNEE
-                   if page.find("LNEE,volume") > -1:
-                       printDEBUG(1, "   found LNEE series")                       
-                       entry['series'] = 'lnee'
-                       # Try to fetch the volume number 
-                       if re.search(r'LNEE,volume (.+)\)', page):
-                          printDEBUG(1, "\t try to find the volume number")
-                          volumeText = re.search(r'LNEE,volume (.+)\)', page)
-                          entry['volume'] = volumeText.group(1)
-
-                   # Corrections specific to LNCVB
-                   if page.find("LNCVB,volume") > -1:
-                       printDEBUG(1, "   found LNCVB series")                       
-                       # Try to fetch the volume number 
-                       if re.search(r'LNCVB,volume (.+)\)', page):
-                          printDEBUG(1, "\t try to find the volume number")
-                          volumeText = re.search(r'LNCVB,volume (.+)\)', page)
-                          entry['volume'] = volumeText.group(1)
-                       # Try to guess the conference name
-                       bookTitleText = re.search(r'(citation_inbook_title\"\scontent)=\"(.+)\"', page)
-                       entry['booktitle'] = bookTitleText[2]
-
-                   printDEBUG(1, "Springer editor: changing entry type from article to inproceedings - done")
-
-        # Put a checkpoint
-        get_linenumber() 
-
-        # Check for SPIE Proceedings / This might need some adaptation
-        if ( entry['doi'].find("10.1117/") > -1 and not 'booktitle' in entry.keys() and not entry['doi'].find("jei") > -1 ):  # SPIE
-            printDEBUG(1, "Found SPIE entry wrongly considered as a journal instead of proceedings")
+        # Crossref is not always well-formatted and sometimes tags
+        # conference/workshop papers as ``journal``.
+        if ('onference' in entry['journal']) or ('orkshop' in entry['journal']):
             entry['ENTRYTYPE'] = "inproceedings"
             entry['booktitle'] = entry['journal']
-            printDEBUG(1, "\tdeleting journal entry")
             del entry['journal']
-            entry['publisher'] = "SPIE"
-            entry['series'] = "pspie"
-            entry['keywords'] = ''
-           
-            # Put a checkpoint
-            get_linenumber() 
+            if entry.get('address') is None:
+                entry['address'] = ''
 
-            # Try to fetch booktitle and volume number
-            page = getContentFromURL(entry['url'])
-            volumeText = re.search(r'\d+', page)
-            volumeText = re.search(r'citation_volume\"\scontent=\"(.+)\"', page)
-            get_linenumber() 
-            entry['volume'] = volumeText.group(1)
-            get_linenumber() 
+    # Month -------------------------------------------------------------------
+    if 'month' in entry:
+        entry['month'] = entry['month'].lower()
 
-        # Put a checkpoint
-        get_linenumber() 
 
-        # Check for IOP Conferences Series / This might need some adaptation
-        if entry['doi'].find("10.1088/") > -1:  # IOP
-            printDEBUG(1, "Found IOP publisher -> check for article Conference Series")
-            if 'booktitle' in entry.keys():    
-                booktitle = entry['booktitle']
-                if booktitle.find('Conference Series') > -1:
-                    printDEBUG(1, "Found IOP Conference Series")
-                    entry['series'] = "jpcs"
-                # Try to fetch booktitle 
-                # Currently, it is too complicated (because it is not structured) -> ask the user to do it by hand
-                entry['booktitle'] = "CHECK THIS BY HAND"
-                entry['pages'] = "CHECK THIS BY HAND"
-                if 'number' in entry.keys():    
-                    del entry['number'] 
-                if 'address' in entry.keys():    
-                    del entry['address'] 
-                if 'shortjournalproceedings' in entry.keys():    
-                    del entry['shortjournalproceedings'] 
+def _sanitize_after_key(entry: dict) -> None:
+    """Extra clean-up (doi / url / title / field removal) after the key is built."""
+    entry['doi']   = entry['doi'].replace("\\",               "")
+    entry['url']   = entry['url'].replace("\\",               "")
+    entry['title'] = entry['title'].replace("\\textquotesingle ", "'")
+    entry['title'] = entry['title'].replace("\\textquotedblleft",  "``")
+    entry['title'] = entry['title'].replace("\\textquotedblright", "''")
+    entry['title'] = entry['title'].replace("\n",                 "")
+    entry['title'] = entry['title'].replace("\\&lt;title\\&gt;",  "")   # old SPIE
+    entry['title'] = entry['title'].replace("\\&lt;/title\\&gt;", "")   # old SPIE
 
-        # Put a checkpoint
-        get_linenumber() 
+    # Protect mid-word acronyms / all-upper words by wrapping in braces.
+    for item in re.findall(r'\w+[A-Z]+\w+|[A-Z][A-Z]+', entry['title']):
+        entry['title'] = entry['title'].replace(item, "{" + item + "}")
 
-        # Check for an arXiv document 
-        if entry['doi'].find("10.48550/") > -1:  # arXiv
-            entry = handle_arXiV(entry)
+    # Drop noisy fields.
+    for stale in ('abstractnote', 'issn', 'isbn'):
+        if stale in entry:
+            del entry[stale]
 
-        # Check for a bioRxiv document 
-        if entry['doi'].find("10.1101/") > -1:  # bioRxiv
-            entry = handle_bioRxiv(entry)
+    # Always ensure a ``keywords`` key exists.
+    entry.setdefault('keywords', '')
 
-        # Check for a Research Archive of Rising Scholars document 
-        if entry['doi'].find("10.58445/") > -1:  #  research_archive
-            entry = handle_research_archive(entry)
 
-        # Check for a Research Square preprint document 
-        if entry['doi'].find("10.21203/") > -1:  # Research Square
-            entry = handle_PREPRINT(entry)
-
-        # Check for a MDPI preprint document 
-        if entry['doi'].find("10.20944/") > -1:  # MDPI preprint
-            entry = handle_preprintMDPI(entry)
-
-        # Check for a Psy-arXiv document 
-        if entry['doi'].find("10.31234/") > -1:  # Psy-arXiv
-            entry = handle_PsyArXiv(entry)
-
-        # Check for a SSRN (Social Science Research Network)
-        if entry['doi'].find("10.2139/") > -1:  # SSRN
-            entry = handle_ssrn(entry)
-
-        # Check for a TechRxiv document
-        if entry['doi'].find("10.36227/") > -1:  # TechRxiv
-            entry = handle_TechRxiv(entry)
-
-        # Check for a Zenodo
-        if entry['doi'].find("10.5281/") > -1:  # Zenodo
-            entry = handle_zenodo(entry)
-
-        # Put a checkpoint
-        get_linenumber() 
-
-        # Check for abbreviated conference name 
-        best_ratio = 0
-        best_key = ''
-        best_value = ''
-        booktitle_abbr = 0
-        if 'booktitle' in entry.keys():
-            # First we try to remove a potential year number in the booktitle (that would reduce the match)
-            year = entry['year'] + " "
-            if entry['booktitle'].find(year) > -1:
-                printDEBUG(1, "Found year in booktitle; removing it")
-                printDEBUG(1, "\tBefore removing it " +  entry['booktitle'] )
-                entry['booktitle'] = entry['booktitle'].replace(year, '')
-                printDEBUG(1, "\tAfter removing it " +  entry['booktitle'] + "\n")
-            name = entry['booktitle']
-            for abbr_key, abbr_text in abbr.items():
-                ratio = lev.ratio(name, abbr_text)
-                if ratio > best_ratio:
-                    # print( abbr_text + " ( " + abbr_key + ") -> " + str(ratio))
-                    best_ratio = ratio
-                    best_key = abbr_key
-                    best_value = abbr_text
-        if best_ratio > 0.8:
-            booktitle_abbr = 1
-            entry['booktitle'] = best_key    
-            printDEBUG(2, "Changing " + name + " by ")
-            printDEBUG(2, abbr[best_key])
-            if best_ratio < 0.9: 
-                print("\nVERIFY if correct: substituting\n\t" + name + " by\n\t " + abbr[best_key])
-
-        # Put a checkpoint
-        get_linenumber() 
-
-        # Specific to CVPR(W)
-        if 'booktitle' in entry.keys():
-            if entry['booktitle'] == 'icvpr' or entry['booktitle'] == 'icvprw': 
-                entry['address'] = switcher[ int(entry['year']) ] 
-                printDEBUG(1, "Found icvpr and adding address " + entry['address'])
-                entry['keywords'] = ''
-                del entry['shortjournalproceedings'] 
-                # Add an entry for pages if it does not exist
-                if not 'pages' in entry.keys():
-                    entry['pages'] = ''
-
-        # Specific to ACM (that does not provide the page numbers in the fetched metadata)
-        if entry['doi'].find("10.1145/") > -1: 
-            handle_ACM(entry)
-
-        # Put a checkpoint
-        get_linenumber() 
-
-        # Specific to IEEE conferences 
-        if ( entry['doi'].find("10.1109/") > -1 and 'booktitle' in entry.keys() ) : 
-            printDEBUG(1, "\nThis is an IEEE conference")
-
-            # 1. Try to find the start and end pages automagically
-            if  ( 'pages' not in entry.keys() or len(entry['pages']) < 1) : 
-                printDEBUG(1, "\tTry to find missing pages of an IEEE conference")
-                page = getContentFromURL(entry['url'])
-                if re.search(r'startPage', page) and re.search(r'endPage', page):
-                    startPageSearch = re.search(r'startPage\":\"(\d+)\"', page)
-                    printDEBUG(2, startPageSearch)
-                    endPageSearch = re.search(r'endPage\":\"(\d+)\"', page)
-                    printDEBUG(2, endPageSearch)
-                    entry['pages'] = startPageSearch[1] + "-" + endPageSearch[1]  
-                    if DEBUG >= 1: 
-                        print("\tFound page range = " + entry['pages'])
-                else: 
-                    printDEBUG(1, "\tCould not find missing page range")
- 
-            # 2. Try to fill the Conference location automagically
-            if ( 'address' not in entry.keys() or len(entry['address']) <1) : 
-                printDEBUG(1, "\tTry to find missing conference location of an IEEE conference")
-                page = getContentFromURL(entry['url'])
-                if re.search(r'confLoc', page) :
-                    printDEBUG(1, "\tTrying to extract the confLoc data")
-                    if re.search(r'confLoc\":\"([\w,\s]+)\"', page) :
-                        addressLocation = re.search(r'confLoc\":\"([\w,\s]+)\"', page)
-                        entry['address'] = addressLocation[1] 
-                        printDEBUG(1, "\tFound conference location = " + entry['address'])   
-                    else:
-                        printDEBUG(1, "\tCould not find conference location")
- 
-        # Specific to MDPI
-        # Try to find the number of pages of MDPI documents 
-        if entry['doi'].find("10.3390/") > -1:  # MDPI editor
-            entry = handle_MDPI(entry)
-
-        # Put a checkpoint
-        get_linenumber() 
-
-        # Check for abbreviated address
-        best_ratio = 0
-        best_key = ''
-        best_value = ''
-        address = 0
-        if 'address' in entry.keys():
-            name = entry['address']
-            printDEBUG(1, "\nTry to find abbreviated conference location for " + name )
-            for abbr_key, abbr_text in abbr.items():
-                ratio = lev.ratio(name, abbr_text)
-                if ratio > best_ratio:
-                    # print( abbr_text + " ( " + abbr_key + ") -> " + str(ratio))
-                    best_ratio = ratio
-                    best_key = abbr_key
-                    best_value = abbr_text
-            if best_ratio > 0.8:
-                booktitle_abbr = 1
-                entry['address'] = best_key    
-
-        # Put a checkpoint
-        get_linenumber() 
-
-        # Check for abbreviated publisher
-        best_ratio = 0
-        best_key = ''
-        best_value = ''
-        address = 0
-        if 'publisher' in entry.keys():
-            name = entry['publisher']
-            for abbr_key, abbr_text in abbr.items():
-                ratio = lev.ratio(name, abbr_text)
-                if ratio > best_ratio:
-                    # print( abbr_text + " ( " + abbr_key + ") -> " + str(ratio))
-                    best_ratio = ratio
-                    best_key = abbr_key
-                    best_value = abbr_text
-        if best_ratio > 0.9:
-            booktitle_abbr = 1
-            entry['publisher'] = best_key    
-
-        # Add an empty "pages" key for Conference if it does not exist
-        if 'booktitle' in entry.keys() and not 'pages' in entry.keys():
-            entry['pages'] = ''
-       
-        # Experimental 
-        # Specific to Elsevier
-        # Try to find the page range when it is not given 
-        if ( entry['doi'].find("10.1016/") > -1 ) and ( 'pages' in entry.keys() ) and ( entry['pages'].find("-") < 1 ) :  # Elsevier editor
-            printDEBUG(1, "\nThis is a paper by the Elsevier editor and try to find the page range instead of the article number")
-            page = getContentFromURL(entry['url'])
-            printDEBUG(1, "\tAt the present time, the script is not able to replace the article number by the page range, due to javascript issues. Sorry...")
-
-        # Just a common change (my personal choice) 
-        if 'pages' in entry.keys():
-            entry['pages'] = entry['pages'].replace("--", "-")
-        if 'copyright' in entry.keys():
-            printDEBUG(1, "Deleting copyright " + entry['copyright'])
-            del  entry['copyright']
-
-        # Put a checkpoint
-        get_linenumber() 
-
-        # Parser and convert to string
-        writer = BibTexWriter()
-        writer.indent = '\t'
-        writer.display_order = ('ENTRYTYPE', 'title', 'author', 'journal', 'booktitle', 'shortjournalproceedings', 'howpublished', 'series', 'volume', 'number', 'pages', 'month', 'year', 'institution', 'school', 'publisher', 'eprint', 'address', 'editor', 'keywords', 'eprinttype', 'doi', 'url')
-        bibtex_str = bibtexparser.dumps(db, writer)
-
-        # Problems with the STRINGs for months -> we do some hand-made replacement
-        bibtex_str = bibtex_str.replace('{jan}', "Jan") 
-        bibtex_str = bibtex_str.replace('{feb}', "Feb") 
-        bibtex_str = bibtex_str.replace('{mar}', "Mar") 
-        bibtex_str = bibtex_str.replace('{apr}', "Apr") 
-        bibtex_str = bibtex_str.replace('{may}', "May") 
-        bibtex_str = bibtex_str.replace('{jun}', "Jun") 
-        bibtex_str = bibtex_str.replace('{jul}', "Jul") 
-        bibtex_str = bibtex_str.replace('{aug}', "Aug") 
-        bibtex_str = bibtex_str.replace('{sep}', "Sep") 
-        bibtex_str = bibtex_str.replace('{oct}', "Oct") 
-        bibtex_str = bibtex_str.replace('{nov}', "Nov") 
-        bibtex_str = bibtex_str.replace('{dec}', "Dec") 
-        # Remove {} around any STRING taken from the list of abbreviations
-        for abbr_key, abbr_text in abbr.items():
-            strFrom = '= {' + str(abbr_key) + '}'
-            strInto = '= ' + str(abbr_key) + ''
-            bibtex_str = bibtex_str.replace(strFrom, strInto) 
-        # Correct some mistakes
-        bibtex_str = bibtex_str.replace('\\textendash ', "-") 
-        bibtex_str = bibtex_str.replace('<title>', "") 
-        bibtex_str = bibtex_str.replace('</title>', "") 
-        bibtex_str = bibtex_str.replace('’', '\'') # Bad apostrophe...
-
-        # Put back some {} around 2D and Gaussian for example
-        # However, this must only be done on the line containing the title of the article
-        lines = bibtex_str.split('\n')
-        titleLine = lines[1]
-        if titleLine.find('title = ') > -1:
-             newTitleLine = titleLine
-             for item in acronyms + multid + names + algorithm + cities + countries : 
-                 newTitleLine = newTitleLine.replace(item, "{" + item + "}") 
-             bibtex_str = bibtex_str.replace(titleLine, newTitleLine) 
-        
-        # Dedicated editing
-        # bibtex_str = bibtex_str.replace('{IEEE}', "publisher-ieee") 
-
-	# Remove the last \n character
-        # bibtex_str = bibtex_str[:-1]
-
-        return bibtex_str
-        # return "\n".join(lines)
-    else:
-        raise Exception("Could not get data for \"%s\" from CrossRef (status code)" %
-                (url, raw.status_code))
-
-# -------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    printDEBUG(1, "VERBOSITY LEVEL = " + str(DEBUG) )
+def _log_raw_content(new_key: str, doi_content: str) -> None:
+    """Dump the raw DOI payload to the log directory (best effort)."""
+    if LOGGING <= 0:
+        return
     try:
-        parser = argparse.ArgumentParser()
-        parser.add_argument("doi", help=" DOI")
-        parser.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
-        args = parser.parse_args()
+        filename = path_to_log + new_key
+        printDEBUG(2, "Printing the raw doi content in " + filename)
+        with open(filename, "w") as f:
+            f.write(doi_content)
+    except OSError as e:
+        print("Could not open file:", e)
+
+
+def _load_string_abbreviations() -> Dict[str, str]:
+    """Load the ``@string{...}`` table defined in ``abbreviation.bib``."""
+    with open(path_to_file_abbreviation) as f:
+        bib_database_abbr = bibtexparser.load(f)
+    return bib_database_abbr.strings
+
+
+def _apply_cvpr_special_case(entry: dict) -> None:
+    """Populate the ``address`` of CVPR(W) entries from the yearly lookup."""
+    if 'booktitle' not in entry:
+        return
+    if entry['booktitle'] in ('icvpr', 'icvprw'):
+        entry['address'] = CVPR_CITY_BY_YEAR[int(entry['year'])]
+        printDEBUG(1, "Found icvpr and adding address " + entry['address'])
+        entry['keywords'] = ''
+        del entry['shortjournalproceedings']
+        entry.setdefault('pages', '')
+
+
+def _apply_preprint_handlers(entry: dict) -> dict:
+    """Run every preprint-server handler whose DOI prefix matches."""
+    for prefix, handler in PREPRINT_HANDLERS:
+        if prefix in entry['doi']:
+            entry = handler(entry)
+    return entry
+
+
+def _abbreviate_journal(entry: dict, abbr: Dict[str, str]) -> None:
+    """Replace ``journal`` with its LTWA key when a close match exists."""
+    if 'journal' not in entry:
+        return
+
+    best_ratio, best_key = _best_match(entry['journal'], abbr)
+    if best_ratio > 0:
+        printDEBUG(
+            1,
+            "Current best match for [" + entry['journal'] + "]: "
+            + abbr[best_key] + " ( " + best_key + ") -> " + str(best_ratio),
+        )
+
+    if best_ratio > 0.95 or (best_ratio > 0.8 and len(abbr[best_key]) > 40):
+        printDEBUG(2, "Changing " + entry['journal'] + " by ")
+        printDEBUG(2, abbr[best_key])
+        if best_ratio < 0.98:
+            print(
+                "\nIMPORTANT NOTE -- VERIFY if this is correct: substituting\n\t"
+                + entry['journal'] + " by\n\t " + abbr[best_key]
+            )
+        entry['journal'] = best_key
+        if 'shortjournalproceedings' in entry:
+            del entry['shortjournalproceedings']
+
+
+def _abbreviate_booktitle(entry: dict, abbr: Dict[str, str]) -> None:
+    """Strip any year from the booktitle and match it against the LTWA db."""
+    if 'booktitle' not in entry:
+        return
+
+    year = entry['year'] + " "
+    if year in entry['booktitle']:
+        printDEBUG(1, "Found year in booktitle; removing it")
+        printDEBUG(1, "\tBefore removing it " + entry['booktitle'])
+        entry['booktitle'] = entry['booktitle'].replace(year, '')
+        printDEBUG(1, "\tAfter removing it " + entry['booktitle'] + "\n")
+
+    _abbreviate_field(entry, 'booktitle', abbr, threshold=0.8, warn_below=0.9)
+
+
+def get_entry(doi: str) -> str:
+    """
+    Return a fully-formatted BibTeX string for *doi*.
+
+    This is the entry point used by the CLI; it orchestrates the end-to-end
+    pipeline.  The steps below are numbered to make the pipeline easy to follow.
+    """
+    get_linenumber()
+
+    # 1. Fetch and parse ----------------------------------------------------
+    content     = _fetch_raw_bibtex(doi)
+    doi_content = content                         # kept for optional logging
+    db          = _parse_bibtex(content, doi)
+    entry       = db.entries[0]
+
+    printDEBUG(1, "Just fetched: ")
+    printDEBUG(1, entry)
+    if DEBUG >= 1:
+        get_linenumber()
+
+    # 2. Base normalisation -------------------------------------------------
+    _normalise_base_entry(entry)
+
+    # 3. Build a nice BibTeX key --------------------------------------------
+    if 'year' not in entry:
+        print("Problem: no year in the fields of doi")
+        print(entry)
+    else:
+        old_key = str(entry['ID'])
+        new_key = _build_bibtex_key(entry)
+        printDEBUG(1, "Replacing ID key " + old_key + " by " + new_key)
+        entry['ID'] = new_key
+        _log_raw_content(new_key, doi_content)
+
+    printDEBUG(2, "Before processing but after changing the ID key")
+    printDEBUG(2, entry)
+
+    # 4. Load the @string abbreviation table --------------------------------
+    abbr = _load_string_abbreviations()
+
+    # 5. Sanitize after key generation --------------------------------------
+    _sanitize_after_key(entry)
+    get_linenumber()
+
+    # 6. Publisher-specific post-processing ---------------------------------
+    _handle_springer(entry); get_linenumber()
+    _handle_spie(entry);     get_linenumber()
+    _handle_iop(entry);      get_linenumber()
+
+    # 7. Preprint-server handlers (dispatched by DOI prefix) ----------------
+    entry = _apply_preprint_handlers(entry)
+    get_linenumber()
+
+    # 8. Abbreviation matching on the main fields ---------------------------
+    _abbreviate_journal(entry, abbr)
+    get_linenumber()
+    _abbreviate_booktitle(entry, abbr)
+    get_linenumber()
+
+    # 9. CVPR / ACM / IEEE / MDPI specific fine-grained fixes ---------------
+    _apply_cvpr_special_case(entry)
+
+    if entry['doi'].find("10.1145/") > -1:
+        handle_ACM(entry)
+    get_linenumber()
+
+    _handle_ieee(entry)
+
+    if entry['doi'].find("10.3390/") > -1:              # MDPI editor
+        entry = handle_MDPI(entry)
+    get_linenumber()
+
+    # 10. Abbreviate the address and the publisher --------------------------
+    if 'address' in entry:
+        printDEBUG(1, "\nTry to find abbreviated conference location for " + entry['address'])
+        _abbreviate_field(entry, 'address', abbr, threshold=0.8)
+    get_linenumber()
+
+    _abbreviate_field(entry, 'publisher', abbr, threshold=0.9)
+
+    # 11. Small finishing touches -------------------------------------------
+    if 'booktitle' in entry and 'pages' not in entry:
+        entry['pages'] = ''
+
+    # MVD : the next does not work for the time being
+    # _handle_elsevier(entry)
+
+    if 'pages' in entry:
+        entry['pages'] = entry['pages'].replace("--", "-")
+    if 'copyright' in entry:
+        printDEBUG(1, "Deleting copyright " + entry['copyright'])
+        del entry['copyright']
+    get_linenumber()
+
+    # 12. arXiv "et al." expansion -----------------------------------------
+    # When the author list of an arXiv entry was truncated with "et al.",
+    # emit two entries built from a SINGLE arXiv abs-page scrape so that
+    # both use the canonical "Last, First and Last, First and ..." form:
+    #   - a short one keyed "...-etal" whose list is the first K scraped
+    #     authors followed by "et al" (K = number of named authors in
+    #     the original entry before its "et al." marker);
+    #   - a full one whose author list is every scraped author,
+    #     ASCII-cleaned.
+    if entry.get('eprinttype') == 'arXiv' and author_list_has_et_al(entry.get('author', '')):
+        eprint  = entry.get('eprint')
+        scraped = fetch_arxiv_authors(eprint) if eprint else None
+        short = build_arxiv_etal_short(entry, scraped)
+        full  = build_arxiv_etal_full(entry,  scraped)
+        entries = [short]
+        if full is not None:
+            entries.append(full)
+        else:
+            printDEBUG(1, "arxiv-etal: full-list scrape failed; emitting short form only")
+        db.entries = entries
+
+    # 13. Serialize ---------------------------------------------------------
+    return _format_as_bibtex(db, abbr)
+
+
+# ===========================================================================
+# CONFERENCES WITHOUT DOI - INFRASTRUCTURE
+# ===========================================================================
+#
+# Some major ML/AI conferences (NeurIPS/NIPS, ICML, ICLR, ...) do not assign
+# DOIs to every paper.  We therefore cannot rely on ``doi.org`` and must parse
+# proceedings / OpenReview URLs directly.
+#
+# The architecture mirrors the publisher-handler pattern used elsewhere in
+# this file:
+#
+#   * ``ConferenceSource`` is the abstract base class.  Subclasses describe
+#     *one* conference series (e.g. NeurIPS).  They declare the URL patterns
+#     they recognise (``matches``) and implement the metadata extraction
+#     (``fetch``).
+#   * ``CONFERENCE_SOURCES`` is a simple registry of subclasses.  Adding ICML
+#     or ICLR support means writing a tiny subclass and appending it to the
+#     registry -- nothing else in the pipeline changes.
+#   * ``resolve_input`` is the single public entry point: given either a DOI
+#     or a URL, it returns a BibTeX string.  DOIs continue to flow through
+#     ``get_entry``; URLs are dispatched to the first matching source.
+# ---------------------------------------------------------------------------
+
+
+class ConferenceSource:
+    """Abstract base class for conferences that do not expose DOIs.
+
+    Subclasses MUST set the class attributes below and override
+    :meth:`matches` / :meth:`fetch`.  They MAY override :meth:`_infer_year`
+    if the year is not trivially derivable from the URL.
+    """
+
+    # -- Conference identity ------------------------------------------------
+    #: Short name, used only for debug messages.
+    name: str = ""
+    #: BibTeX ``booktitle`` string alias (e.g. ``"nips"``, ``"icml"``).
+    #: The script's ``bib/strings.bib`` is expected to define this alias.
+    booktitle: str = ""
+    #: Publisher name; kept empty if not applicable (OpenReview has none).
+    publisher: str = ""
+    #: Default month for the conference, as a BibTeX month macro.
+    month: str = "dec"
+    #: Mapping ``year -> city macro`` (e.g. ``2024 -> 'city-vancouver'``).
+    #: When the macro is missing, the raw string (``"Virtual"`` etc.) is used.
+    city_by_year: Dict[int, str] = {}
+
+    # -- URL dispatch -------------------------------------------------------
+    @classmethod
+    def matches(cls, url: str) -> bool:
+        """Return True if this source can handle ``url``.  Override in subclass."""
+        return False
+
+    # -- Main extraction ----------------------------------------------------
+    def fetch(self, url: str) -> str:
+        """Return a BibTeX string for ``url``.  Override in subclass."""
+        raise NotImplementedError
+
+    # -- Helpers shared by all subclasses -----------------------------------
+    def _base_entry(self, year: int, url: str) -> Dict[str, str]:
+        """Return a dictionary with the generic fields common to all entries."""
+        entry: Dict[str, str] = {
+            "ENTRYTYPE": "inproceedings",
+            "booktitle": self.booktitle,
+            "year": str(year),
+            "month": self.month,
+            "url": url,
+        }
+        if self.publisher:
+            entry["publisher"] = self.publisher
+        city = self.city_by_year.get(year)
+        if city:
+            entry["address"] = city
+        return entry
+
+    @staticmethod
+    def _format_authors(authors: List[str]) -> str:
+        """Convert ``['First Last', 'Alice Bob']`` to a BibTeX ``and`` list.
+
+        Names are normalised to ``Last, First Middle`` form so that BibTeX
+        and the abbreviation pipeline treat them consistently.
+        """
+        formatted: List[str] = []
+        for raw in authors:
+            raw = raw.strip()
+            if not raw:
+                continue
+            if "," in raw:
+                # Already in ``Last, First`` form.
+                formatted.append(raw)
+                continue
+            parts = raw.split()
+            if len(parts) == 1:
+                formatted.append(parts[0])
+            else:
+                last = parts[-1]
+                first = " ".join(parts[:-1])
+                formatted.append(f"{last}, {first}")
+        return " and ".join(formatted)
+
+    @staticmethod
+    def _make_bibtex_id(authors: List[str], title: str, year: int) -> str:
+        """Build an ID similar to the one produced by ``_build_bibtex_key``."""
+        if authors:
+            first_author = authors[0]
+            if "," in first_author:
+                last = first_author.split(",", 1)[0].strip()
+            else:
+                last = first_author.strip().split()[-1]
+        else:
+            last = "Anon"
+        words = re.findall(r"[A-Za-z0-9]+", title)
+        # BUGFIX-style guard: only use the second word if present.
+        tail = words[1].capitalize() if len(words) >= 2 else (
+            words[0].capitalize() if words else ""
+        )
+        return f"{last}{year}{tail}"
+
+    # Subclasses that cannot derive the year from the URL alone should
+    # override this.
+    def _infer_year(self, url: str, html: Optional[str] = None) -> Optional[int]:
+        match = re.search(r"(19|20)\d{2}", url)
+        return int(match.group(0)) if match else None
+
+
+#: Registry of conference handlers.  Adding support for a new DOI-less
+#: conference is as simple as declaring a subclass and appending it here.
+CONFERENCE_SOURCES: List[type] = []
+
+
+def _extract_doi_from_url(text: str) -> Optional[str]:
+    """If ``text`` looks like a DOI URL, return just the DOI part.
+
+    Also handles arXiv abstract URLs of the form
+    ``https://arxiv.org/abs/<id>`` (with or without a version suffix such
+    as ``v2``), converting them to the canonical DataCite DOI
+    ``10.48550/arXiv.<id>``.
+    """
+    # arXiv abstract or PDF URL  →  10.48550/arXiv.<id>
+    # Handles both /abs/<id> and /pdf/<id> (with or without a version suffix).
+    arxiv_match = re.search(
+        r"arxiv\.org/(?:abs|pdf)/([0-9]{4}\.[0-9]{4,5}(?:v\d+)?|[a-z\-]+/[0-9]{7}(?:v\d+)?)",
+        text.strip(),
+        re.IGNORECASE,
+    )
+    if arxiv_match:
+        arxiv_id = re.sub(r"v\d+$", "", arxiv_match.group(1))  # strip version
+        return f"10.48550/arXiv.{arxiv_id}"
+
+    match = re.search(r"(?:doi\.org/|dx\.doi\.org/)(10\.[^\s]+)", text.strip())
+    if match:
+        return match.group(1)
+    if re.match(r"^10\.\d{3,}/", text.strip()):
+        return text.strip()
+    return None
+
+
+def _looks_like_url(text: str) -> bool:
+    return text.startswith(("http://", "https://"))
+
+
+def _dispatch_conference(url: str) -> Optional[str]:
+    """Return BibTeX for ``url`` if a registered source handles it, else None."""
+    for src_cls in CONFERENCE_SOURCES:
+        if src_cls.matches(url):
+            printDEBUG(1, f"Conference source: {src_cls.name}")
+            return src_cls().fetch(url)
+    return None
+
+
+def resolve_input(identifier: str) -> str:
+    """Single public entry point: accept a DOI *or* a URL.
+
+    The precedence is:
+
+    1. If the input is (or contains) a DOI, hand it to the classical
+       ``get_entry`` pipeline -- behaviour identical to the original script.
+    2. Otherwise, if the input is a URL recognised by a registered
+       :class:`ConferenceSource`, use that handler.
+    3. As a last resort, fall back to ``get_entry`` so the user still sees
+       the original error path.
+    """
+    identifier = identifier.strip()
+
+    # Case 1: bare DOI or DOI URL.
+    doi = _extract_doi_from_url(identifier)
+    if doi is not None:
+        return get_entry(doi)
+
+    # Case 2: URL covered by a conference handler.
+    if _looks_like_url(identifier):
+        bib = _dispatch_conference(identifier)
+        if bib is not None:
+            return bib
+
+    # Case 3: let the legacy pipeline handle (or reject) it.
+    return get_entry(identifier)
+
+
+# ===========================================================================
+# CONFERENCES WITHOUT DOI - NEURIPS
+# ===========================================================================
+#
+# NeurIPS papers appear under several URL schemes depending on the year:
+#
+#   * ``https://papers.nips.cc/paper/<n>-<slug>`` (pre-2020 landing pages)
+#   * ``https://papers.nips.cc/paper_files/paper/<year>/hash/<hash>-Abstract...``
+#   * ``https://proceedings.neurips.cc/paper/<year>/hash/<hash>-Abstract...``
+#   * ``https://proceedings.neurips.cc/paper_files/paper/<year>/hash/<hash>-...``
+#   * ``https://openreview.net/forum?id=<id>`` (2018+)
+#   * ``https://neurips.cc/virtual/<year>/poster/<n>`` (virtual site, SPA)
+#
+# ``papers.nips.cc`` and ``proceedings.neurips.cc`` expose Highwire-style
+# ``citation_*`` meta tags that are trivial to parse.  OpenReview has a
+# stable JSON API.  The virtual site is a single-page app, so we fall back
+# to Selenium (already used elsewhere in this file).
+# ---------------------------------------------------------------------------
+
+
+class NeurIPSSource(ConferenceSource):
+    """Handler for NeurIPS / NIPS papers without a DOI."""
+
+    name = "NeurIPS"
+    booktitle = "nips"
+    publisher = ""
+    month = "dec"
+    city_by_year = {
+        1987: "city-denver",
+        1988: "city-denver",
+        1989: "city-denver",
+        1990: "city-denver",
+        1991: "city-denver",
+        1992: "city-denver",
+        1993: "city-denver",
+        1994: "city-denver",
+        1995: "city-denver",
+        1996: "city-denver",
+        1997: "city-denver",
+        1998: "city-denver",
+        1999: "city-denver",
+        2000: "city-denver",
+        2001: "city-vancouver",
+        2002: "city-vancouver",
+        2003: "city-vancouver",
+        2004: "city-vancouver",
+        2005: "city-vancouver",
+        2006: "city-vancouver",
+        2007: "city-vancouver",
+        2008: "city-vancouver",
+        2009: "city-vancouver",
+        2010: "city-vancouver",
+        2011: "city-granada",
+        2012: "city-stateline",
+        2013: "city-stateline",
+        2014: "city-montreal",
+        2015: "city-montreal",
+        2016: "city-barcelona",
+        2017: "city-longbeach",
+        2018: "city-montreal",
+        2019: "city-vancouver",
+        2020: "Virtual",
+        2021: "Virtual",
+        2022: "city-neworleans",
+        2023: "city-neworleans",
+        2024: "city-vancouver",
+        2025: "city-sandiego",
+    }
+
+    # -- URL dispatch -------------------------------------------------------
+    _HOSTS = (
+        "openreview.net",
+        "proceedings.neurips.cc",
+        "papers.nips.cc",
+        "papers.neurips.cc",
+        "neurips.cc/virtual",
+    )
+
+    @classmethod
+    def matches(cls, url: str) -> bool:
+        lower = url.lower()
+        return any(host in lower for host in cls._HOSTS)
+
+    # -- Main extraction ----------------------------------------------------
+    def fetch(self, url: str) -> str:
+        printDEBUG(1, f"NeurIPSSource.fetch({url})")
+        if "openreview.net" in url:
+            return self._fetch_from_openreview(url)
+        if "neurips.cc/virtual" in url:
+            return self._fetch_from_virtual(url)
+        if "proceedings.neurips.cc" in url or "papers.nips.cc" in url \
+                or "papers.neurips.cc" in url:
+            return self._fetch_from_proceedings(url)
+        raise ValueError(f"Unrecognised NeurIPS URL: {url}")
+
+    # -- OpenReview ---------------------------------------------------------
+    _OPENREVIEW_API_V2 = "https://api2.openreview.net/notes?id={note_id}"
+    _OPENREVIEW_API_V1 = "https://api.openreview.net/notes?id={note_id}"
+
+    def _fetch_from_openreview(self, url: str) -> str:
+        match = re.search(r"[?&]id=([^&]+)", url)
+        if not match:
+            raise ValueError(f"No OpenReview id= parameter in URL: {url}")
+        note_id = match.group(1)
+
+        note = self._openreview_get(note_id)
+        if note is None:
+            raise RuntimeError(f"OpenReview note not found: {note_id}")
+
+        content = note.get("content", {})
+        title = self._openreview_field(content, "title")
+        authors = self._openreview_field(content, "authors") or []
+        if isinstance(authors, str):
+            authors = [a.strip() for a in authors.split(",")]
+        abstract = self._openreview_field(content, "abstract")
+        venue = self._openreview_field(content, "venue") or ""
+        # Year: prefer explicit ``pdate`` (ms since epoch), else scrape venue.
+        year = self._openreview_year(note, venue)
+
+        entry = self._base_entry(year, url)
+        entry["title"] = title or ""
+        entry["author"] = self._format_authors(authors)
+        if abstract:
+            entry["abstract"] = abstract
+        entry["ID"] = self._make_bibtex_id(authors, title or "", year)
+        return _post_process_conference_entry(entry)
+
+    @staticmethod
+    def _openreview_field(content: Dict, key: str):
+        """OpenReview v2 wraps values in ``{"value": X}``; v1 stores X directly."""
+        value = content.get(key)
+        if isinstance(value, dict) and "value" in value:
+            return value["value"]
+        return value
+
+    def _openreview_get(self, note_id: str) -> Optional[Dict]:
+        for api in (self._OPENREVIEW_API_V2, self._OPENREVIEW_API_V1):
+            try:
+                response = requests.get(api.format(note_id=note_id), timeout=20)
+            except requests.RequestException as exc:
+                printDEBUG(2, f"OpenReview {api} failed: {exc}")
+                continue
+            if response.status_code != 200:
+                continue
+            try:
+                payload = response.json()
+            except ValueError:
+                continue
+            notes = payload.get("notes") or []
+            if notes:
+                return notes[0]
+        return None
+
+    def _openreview_year(self, note: Dict, venue: str) -> int:
+        pdate = note.get("pdate") or note.get("cdate")
+        if isinstance(pdate, (int, float)):
+            try:
+                return datetime.datetime.utcfromtimestamp(pdate / 1000).year
+            except (ValueError, OSError):
+                pass
+        match = re.search(r"(19|20)\d{2}", venue)
+        if match:
+            return int(match.group(0))
+        # Fallback: OpenReview ``forum?id=`` URLs sometimes embed the year
+        # in the ``invitation`` field.
+        invitation = note.get("invitation") or note.get("invitations")
+        if isinstance(invitation, list):
+            invitation = " ".join(invitation)
+        if isinstance(invitation, str):
+            match = re.search(r"(19|20)\d{2}", invitation)
+            if match:
+                return int(match.group(0))
+        raise RuntimeError("Unable to determine NeurIPS year from OpenReview note")
+
+    # -- papers.nips.cc / proceedings.neurips.cc ----------------------------
+    def _fetch_from_proceedings(self, url: str) -> str:
+        response = requests.get(url, headers=hdr, timeout=30)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        def meta(name: str) -> Optional[str]:
+            tag = soup.find("meta", attrs={"name": name})
+            return tag["content"].strip() if tag and tag.get("content") else None
+
+        def meta_all(name: str) -> List[str]:
+            return [t["content"].strip() for t in soup.find_all(
+                "meta", attrs={"name": name}) if t.get("content")]
+
+        title = meta("citation_title") or (soup.title.string if soup.title else "")
+        authors = meta_all("citation_author")
+        year_str = meta("citation_publication_date") or meta("citation_year") or ""
+        year_match = re.search(r"(19|20)\d{2}", year_str)
+        year: Optional[int] = int(year_match.group(0)) if year_match else None
+        if year is None:
+            year = self._infer_year(url, response.text)
+        if year is None:
+            raise RuntimeError(f"Unable to determine year for {url}")
+
+        # Abstract: the page often has a ``<h4>Abstract</h4>`` followed by a
+        # paragraph.  Be defensive; fall back to empty.
+        abstract = ""
+        h4 = soup.find(lambda t: t.name == "h4" and t.get_text(
+            strip=True).lower() == "abstract")
+        if h4:
+            sibling = h4.find_next(["p", "div"])
+            if sibling:
+                abstract = sibling.get_text(" ", strip=True)
+
+        entry = self._base_entry(year, url)
+        entry["title"] = title or ""
+        entry["author"] = self._format_authors(authors)
+        if abstract:
+            entry["abstract"] = abstract
+        entry["ID"] = self._make_bibtex_id(authors, title or "", year)
+        return _post_process_conference_entry(entry)
+
+    # -- neurips.cc/virtual (single page app) -------------------------------
+    def _fetch_from_virtual(self, url: str) -> str:
+        printDEBUG(1, "NeurIPS virtual site requires a headless browser")
+        options = Options()
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-gpu")
+        driver = webdriver.Chrome(
+            service=Service(ChromeDriverManager().install()),
+            options=options,
+        )
+        try:
+            driver.get(url)
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.TAG_NAME, "h2")))
+            # Give the SPA a beat to populate authors.
+            time.sleep(1.0)
+            page = driver.page_source
+        finally:
+            driver.quit()
+
+        soup = BeautifulSoup(page, "html.parser")
+        title_tag = soup.find(["h2", "h1"])
+        title = title_tag.get_text(strip=True) if title_tag else ""
+        # Authors typically appear in a container labelled ``authors``.
+        authors: List[str] = []
+        for node in soup.select(".author, .authors, .author-list li"):
+            text = node.get_text(" ", strip=True)
+            if text:
+                authors.append(text)
+        year = self._infer_year(url) or datetime.datetime.now().year
+
+        entry = self._base_entry(year, url)
+        entry["title"] = title
+        entry["author"] = self._format_authors(authors)
+        entry["ID"] = self._make_bibtex_id(authors, title, year)
+        return _post_process_conference_entry(entry)
+
+
+CONFERENCE_SOURCES.append(NeurIPSSource)
+
+
+# ---------------------------------------------------------------------------
+# Conference entry serialisation.
+#
+# We reuse the abbreviation-aware serialiser used for the DOI pipeline so that
+# string macros (``nips``, ``city-vancouver``, ...) render without quotes.
+# ---------------------------------------------------------------------------
+
+
+def _post_process_conference_entry(entry: Dict[str, str]) -> str:
+    """Convert a raw entry dict into a pretty BibTeX string."""
+    # Guarantee required fields so downstream tools don't choke.
+    entry.setdefault("ID", "UnknownKey")
+    entry.setdefault("ENTRYTYPE", "inproceedings")
+
+    db = bibtexparser.bibdatabase.BibDatabase()
+    db.entries = [entry]
+    abbr: Dict[str, str] = {}
+    # Reuse the existing string-alias loader if bib/strings.bib is available.
+    try:
+        abbr = _load_string_abbreviations()
+    except Exception as exc:  # pragma: no cover - defensive
+        printDEBUG(2, f"Could not load string abbreviations: {exc}")
+    return _format_as_bibtex(db, abbr)
+
+
+# ---------------------------------------------------------------------------
+# Adding new conferences (ICML, ICLR, ...)
+# ---------------------------------------------------------------------------
+# To add another DOI-less conference, create a subclass of
+# :class:`ConferenceSource` and register it::
+#
+#     class ICMLSource(ConferenceSource):
+#         name = "ICML"
+#         booktitle = "icml"
+#         month = "jul"
+#         city_by_year = {2024: "city-vienna", 2025: "city-vancouver", ...}
+#
+#         @classmethod
+#         def matches(cls, url):
+#             return "icml.cc" in url or (
+#                 "openreview.net" in url and "ICML" in url.upper()
+#             )
+#
+#         def fetch(self, url):
+#             # Delegate to NeurIPSSource._fetch_from_openreview when
+#             # applicable, or parse proceedings.mlr.press pages with the
+#             # same BeautifulSoup approach used for NeurIPS proceedings.
+#             ...
+#
+#     CONFERENCE_SOURCES.append(ICMLSource)
+#
+# The rest of the script (CLI, dispatcher, formatter) picks the new source up
+# automatically.
+
+
+# ===========================================================================
+# COMMAND-LINE INTERFACE
+# ===========================================================================
+
+def _parse_cli_args() -> argparse.Namespace:
+    """Parse ``sys.argv``.
+
+    The positional argument is still called ``doi`` for backwards
+    compatibility with the original script, but it now also accepts a URL
+    (for NeurIPS / DOI-less conferences).
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("doi", help=" DOI or conference URL")
+    parser.add_argument(
+        "-v", "--verbosity",
+        action="count",
+        help="increase output verbosity",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    """Script entry point. Returns a POSIX exit code."""
+    global DEBUG
+
+    printDEBUG(1, "VERBOSITY LEVEL = " + str(DEBUG))
+    try:
+        args = _parse_cli_args()
         if args.verbosity:
             DEBUG = args.verbosity
             print("Verbositiy increased")
         doi = args.doi
-        # doi = sys.argv[1]
 
-        # Put a checkpoint
-        get_linenumber() 
+        get_linenumber()
 
-        data = get_entry(doi)
+        # ``resolve_input`` routes DOIs to the classical pipeline and URLs
+        # to the conference-handler registry; falls back to ``get_entry``
+        # so the legacy error messages are preserved.
+        data = resolve_input(doi)
         print(data)
-
-    except IndexError as ie:
-        # print("Usage: %s DOI" % os.path.basename(sys.argv[0]), file=sys.stderr)
-        # print("Usage: %s DOI" % os.path.basename(sys.argv[0]))
-        # print("No DOI provided", file=sys.stderr)
+    except IndexError:
         print("No DOI provided")
-        sys.exit(1)
+        return 1
     except Exception as exc:
-        # print(exc, file=sys.stderr)
         print(exc)
-        sys.exit(1)
+        return 1
+    return 0
 
+
+if __name__ == "__main__":
+    sys.exit(main())

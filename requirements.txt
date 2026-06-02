@@ -5,3 +5,4 @@ selenium==4.35.0
 webdriver_manager==4.0.2
 requests-html==0.10.0
 lxml_html_clean==0.4.2
+beautifulsoup4
