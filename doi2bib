@@ -29,7 +29,6 @@ import os.path
 import re
 import sys
 import time
-import urllib.request
 from inspect import currentframe
 from os import environ, makedirs
 from typing import Callable, Dict, List, Optional, Tuple
@@ -165,12 +164,13 @@ COUNTRIES: List[str] = [
     'Zambia', 'Zimbabwe',
 ]
 PROPER_NAMES: List[str] = [
-    'Bhattacharyya', 'Bernoulli', 'Carlo', 'Euclidean', 'Fourier',
-    'Gaussian', 'Gemini', 'Gibbs', 'Haar', 'Hough', 'Laplace', 'Laplacian',
-    'Markov', 'Minkowski', 'Monte', 'Shannon', 'Viterbi', 'Voronoi',
+    'Bayes', 'Bhattacharyya', 'Bernoulli', 'Carlo', 'Copernicus', 'Euclidean', 'Fourier',
+    'Gaussian', 'Gemini', 'Gibbs', 'Hamming', 'Haar', 'Hough', 
+    'Jaccard', 'Laplace', 'Laplacian', 'Manhattan', 'Matthews', 
+    'Markov', 'Minkowski', 'Monte', 'Pareto', 'Shannon', 'Viterbi', 'Voronoi',
 ]
-MULTI_D:      List[str] = ['2D', '2-D', '2D/3D', '3D', '3-D', '5G', '6G']
-ALGORITHMS:   List[str] = ['Vibe', 'ITS', 'Yolo']
+MULTI_D:      List[str] = ['2D', '2-D', '2D/3D', '3DTV', '3D', '3-D', '5G', '6G']
+ALGORITHMS:   List[str] = ['ITS', 'Mamba', 'SAR', 'ToF', 'Vibe', 'Yolo']
 
 # --- Abbreviation database --------------------------------------------------
 # Words that are never abbreviated when building a journal/conference name.
@@ -192,6 +192,13 @@ ISSN_UPD: datetime.date = datetime.date(2016, 9, 15)
 # DOI2BIB_EMAIL; if that is not set we fall back to a generic placeholder that
 # satisfies the API requirement without exposing anyone's real address.
 _CONTACT_EMAIL: str = environ.get("DOI2BIB_EMAIL", "doi2bib-user@example.com")
+
+# --- Script version -----------------------------------------------------------
+# Stamped onto every generated entry as the ``d2b-version`` field so that,
+# after a future doi2bib upgrade, entries produced by an older version can be
+# found (grep for a ``d2b-version`` older than the current one, or missing
+# entirely) and reparsed to catch encoding fixed by the newer version.
+_D2B_VERSION: str = "1.1"
 
 # --- HTTP headers -----------------------------------------------------------
 # Some publishers actively block bare requests; a spoofed User-Agent avoids it.
@@ -305,7 +312,7 @@ def dl_abbrev(fname: str = 'abbrev.txt.gz') -> None:
     r = requests.get(url, allow_redirects=True)
     data = r.content
     directory = data_home('citation')
-    makedirs(directory)
+    makedirs(directory, exist_ok=True)
 
     with gzip.open(os.path.join(directory, fname), 'wb') as f:
         f.write(data)
@@ -359,7 +366,7 @@ def journal_abbrev(name: str) -> str:
     """Return an abbreviated journal title for *name* based on the ISSN LTWA."""
     printDEBUG(2, "Loading abbreviation for journal as ")
     printDEBUG(3, "Printing the full (long) list of abbreviations...")
-    printDEBUG(3, load_abbrev(os.path.join(sys.path[0] + "abbrev.txt.gz")))
+    printDEBUG(3, load_abbrev(os.path.join(sys.path[0], "abbrev.txt.gz")))
 
     data = load_abbrev(os.path.join(sys.path[0], "abbrev.txt.gz"))
 
@@ -425,16 +432,24 @@ def getContentFromURL(url: str) -> str:
     """
     Download *url* and return its decoded body.
 
-    Uses ``urllib`` with a spoofed User-Agent because some publishers
-    (Springer, IEEE, etc.) actively block naive HTTP clients.
-    """
-    opener = urllib.request.build_opener()
-    opener.addheaders = list(_SPOOFED_HEADERS)
-    urllib.request.install_opener(opener)
+    Uses ``requests`` (not ``urllib``) with a spoofed User-Agent because some
+    publishers (Springer, IEEE, etc.) actively block naive HTTP clients.
 
-    u = urllib.request.urlopen(url)
-    charset = u.headers.get_content_charset(failobj="utf-8")
-    return u.read().decode(charset)
+    BUGFIX: Springer's landing pages started serving a JS "Client Challenge"
+    shell (~3 KB, no content) specifically to ``urllib``-based requests, even
+    with an identical spoofed User-Agent -- almost certainly a TLS/HTTP
+    fingerprint check rather than a header check, since plain ``curl`` and
+    ``requests`` with the *same* headers both got the real page. This broke
+    every Springer-series fix-up (LNCS, ISRL, LNEE, LNCVB, SBD, ...) in
+    ``_handle_springer``, which silently fell through to leaving the entry
+    as a plain ``@article`` instead of the expected ``@inproceedings`` with
+    ``series``/``booktitle``/``volume`` set. Switching to ``requests``
+    (already a dependency, already used by ``_crossref_event_location``)
+    fixes it for every caller of this function.
+    """
+    resp = requests.get(url, headers=dict(_SPOOFED_HEADERS), timeout=15)
+    resp.raise_for_status()
+    return resp.text
 
 
 def _make_headless_chrome(**prefs) -> webdriver.Chrome:
@@ -938,6 +953,9 @@ def handle_MDPI(entry: dict) -> dict:
     2. Try each URL with plain ``requests`` + ``PyPDF2``.
     3. Fall back to the original Selenium path (headless Chrome) if every
        lightweight attempt fails.
+    If no PDF is reachable (e.g. Akamai bot protection, paper too recent
+    for Unpaywall), the ``pages`` field is left empty and a warning is
+    printed.  BibTeX/Biber silently ignore a missing pages field.
     """
     printDEBUG(1, "\nThis is a paper by the MDPI editor: try to find the number of pages")
     printDEBUG(1, "\tFetching candidate PDF URLs for " + entry['doi'])
@@ -969,6 +987,9 @@ def handle_MDPI(entry: dict) -> dict:
         entry['pages'] = '1-' + str(num_pages)
         printDEBUG(1, "\tFound page range = " + entry['pages'])
     else:
+        # Leave pages empty so BibTeX/Biber ignore it rather than
+        # inheriting a bare article number from the doi.org BibTeX feed.
+        entry['pages'] = ''
         print("WARNING: could not find the number of pages")
 
     return entry
@@ -1148,6 +1169,119 @@ _SPRINGER_PAGE_HINTS: List[Tuple[str, str, str, str]] = [
 ]
 
 
+# Springer series as named in CrossRef's ``container-title`` list, mapped to
+# the same (target-field, value) pair that ``_SPRINGER_PAGE_HINTS`` would set
+# from the landing page.  Used only when the landing page is unreachable.
+_SPRINGER_CROSSREF_SERIES: List[Tuple[str, str, str]] = [
+    ("Lecture Notes in Computer Science",                    "journal", "lncs"),
+    ("Communications in Computer and Information Science",   "journal", "ccis"),
+    ("Intelligent Systems Reference Library",                "journal", "isrl"),
+    ("Lecture Notes in Electrical Engineering",              "series",  "lnee"),
+    ("Lecture Notes in Networks and Systems",                "series",  "lnns"),
+    ("Advances in Intelligent Systems and Computing",        "series",  "aisc"),
+]
+
+
+def _is_springer_challenge(page: str) -> bool:
+    """True if *page* is Springer's JS "Client Challenge" shell (bot wall)
+    rather than the real landing page.
+
+    Since ~2026 link.springer.com serves a ~3 KB challenge page (assets under
+    ``/_fs-ch-...``) to every non-browser HTTP client (``requests``, ``curl``,
+    even ``curl_cffi`` with browser impersonation).  The real chapter page is
+    several hundred KB and carries ``citation_*`` meta tags.
+    """
+    if not page:
+        return True
+    if 'citation_doi' in page or 'citation_title' in page:
+        return False
+    return ('Client Challenge' in page) or ('/_fs-ch-' in page) or len(page) < 20000
+
+
+def _get_springer_page_with_browser(url: str) -> str:
+    """Fetch *url* with headless Chrome (passes the JS challenge); '' on failure."""
+    try:
+        driver = _make_headless_chrome()
+    except Exception as exc:
+        printDEBUG(1, f"\tHeadless Chrome unavailable: {exc}")
+        return ''
+    try:
+        driver.set_page_load_timeout(30)
+        driver.get(url)
+        # The challenge page redirects/reloads itself; wait for the real meta tags.
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'meta[name="citation_doi"]'))
+        )
+        return driver.page_source or ''
+    except Exception as exc:
+        printDEBUG(1, f"\tHeadless Chrome could not get past the Springer challenge: {exc}")
+        return ''
+    finally:
+        try:
+            driver.quit()
+        except Exception:
+            pass
+
+
+def _get_springer_page(url: str) -> str:
+    """Return the real Springer landing page, or '' if it cannot be obtained.
+
+    Tries plain ``requests`` first (cheap; still works for some IPs), then a
+    headless Chrome when a bot-challenge page is detected.
+    """
+    try:
+        page = getContentFromURL(url)
+    except Exception as exc:
+        printDEBUG(1, f"\tSpringer page fetch failed: {exc}")
+        page = ''
+    if not _is_springer_challenge(page):
+        return page
+    printDEBUG(1, "\tSpringer landing page is a bot challenge; trying headless Chrome")
+    page = _get_springer_page_with_browser(url)
+    if page and not _is_springer_challenge(page):
+        return page
+    return ''
+
+
+def _springer_crossref_info(doi: str) -> dict:
+    """Series/conference information for a Springer chapter from CrossRef.
+
+    Returns a dict with optional keys ``series_field``, ``series_value``
+    (as in ``_SPRINGER_CROSSREF_SERIES``) and ``conference_name``
+    (CrossRef ``assertion`` ``conference_name``, e.g. "European Conference
+    on Computer Vision" -- the same text Springer puts in the
+    ``citation_conference_title`` meta tag).  CrossRef carries no volume
+    number for Springer book-series chapters.
+    """
+    info: dict = {}
+    message = _crossref_work(doi)
+    if not message:
+        return info
+    containers = message.get('container-title') or []
+    for long_name, field, value in _SPRINGER_CROSSREF_SERIES:
+        if any(c.strip().lower() == long_name.lower() for c in containers):
+            info['series_field'] = field
+            info['series_value'] = value
+            break
+    for a in message.get('assertion') or []:
+        if a.get('name') == 'conference_name' and a.get('value'):
+            info['conference_name'] = a['value'].strip()
+    return info
+
+
+def _springer_volume_from_page(page: str) -> Optional[str]:
+    """Series volume from a Springer landing page, e.g. "((LNCS,volume 17048))".
+
+    BUGFIX: the former generic ``(volume<space>)(<digits>)`` regex took the *first*
+    "volume N" anywhere on the page; the series marker is matched first now.
+    """
+    m = re.search(r'\(\([A-Za-z]+,\s*volume\s*(\d+)\)\)', page)
+    if m:
+        return m.group(1)
+    m = re.search(r'(volume\s)(\d+)', page)
+    return m.group(2) if m else None
+
+
 def _is_springer_series(entry: dict) -> bool:
     """True iff the ``journal`` field matches a known Springer series or a
     ``series`` field has already been populated upstream."""
@@ -1167,21 +1301,44 @@ def _handle_springer(entry: dict) -> None:
     printDEBUG(1, "\nSpringer editor: check if this article is within a series\n")
     printDEBUG(1, entry)
 
+    # ---- Fetch the landing page once (may be blocked by a bot challenge) --
+    page = _get_springer_page(entry['url'])
+    crossref_info: dict = {}
+    if not page:
+        # Landing page unreachable (Springer "Client Challenge", 2026+):
+        # take the series and conference name from CrossRef instead.
+        print("WARNING: Springer landing page blocked; using CrossRef metadata "
+              "(series volume number cannot be retrieved this way)")
+        crossref_info = _springer_crossref_info(entry['doi'])
+        if 'series_field' in crossref_info:
+            printDEBUG(1, "\t" + crossref_info['series_value'].upper()
+                       + " series detected (CrossRef)")
+            entry[crossref_info['series_field']] = crossref_info['series_value']
+
     # ---- First scan: detect the series from the landing page --------------
-    page = getContentFromURL(entry['url'])
     for marker, target_field, value, name in _SPRINGER_PAGE_HINTS:
         if marker in page:
             printDEBUG(1, "\t" + name + " series detected")
             entry[target_field] = value
 
     # ---- Second scan: MIMB is tested separately (historical) --------------
-    page = getContentFromURL(entry['url'])
     if "MIMB, volume" in page:
         printDEBUG(1, "\tMIMB series detected")
         entry['journal'] = "mimb"
 
     # ---- Only continue if this really is a series entry -------------------
     if not _is_springer_series(entry):
+        # No known Springer series marker was found on the landing page.
+        # Fall back to the same "journal title mentions Conference/Workshop"
+        # heuristic that `_normalise_base_entry` applies to every other
+        # publisher, since that generic step is skipped for Springer DOIs
+        # (it would otherwise pre-empt the series detection above).
+        if ('onference' in entry['journal']) or ('orkshop' in entry['journal']):
+            entry['ENTRYTYPE'] = "inproceedings"
+            entry['booktitle'] = entry['journal']
+            del entry['journal']
+            if entry.get('address') is None:
+                entry['address'] = ''
         return
 
     printDEBUG(1, "Springer editor: changing entry type from article to inproceedings")
@@ -1193,16 +1350,22 @@ def _handle_springer(entry: dict) -> None:
     entry['keywords'] = ''
 
     # ---- Third scan: extract booktitle / volume ---------------------------
-    page = getContentFromURL(entry['url'])
-
     m = re.search(r'(citation_conference_title\"\scontent)=\"(.+)\"', page)
     if m:
         entry['booktitle'] = m[2]
         jabbr = journal_abbrev(entry['booktitle'])
         if jabbr != entry['booktitle']:
             entry['shortjournalproceedings'] = jabbr
-        volume_match = re.search(r'(volume\s)(\d+)', page)
-        entry['volume'] = volume_match.group(2)
+        volume = _springer_volume_from_page(page)
+        if volume:
+            entry['volume'] = volume
+    elif crossref_info.get('conference_name'):
+        # Same text as the page's citation_conference_title meta tag, so the
+        # later _abbreviate_booktitle step maps it identically (e.g. -> eccv).
+        entry['booktitle'] = crossref_info['conference_name']
+        entry.setdefault('volume', '')
+        print("VERIFY: volume missing for " + entry['doi']
+              + " (Springer page blocked) -- add it by hand, see " + entry['url'])
     else:
         entry['booktitle'] = entry['journal']
         entry.setdefault('volume', '')
@@ -1224,7 +1387,11 @@ def _handle_springer(entry: dict) -> None:
         # guard and ``(.+)\)\)`` for the extraction - which crashed when the
         # guard matched but the extraction did not.  We now ``search`` once
         # and use the (single, consistent) match object.
-        volume_match = re.search(r'ISRL,volume (.+)\)', page)
+        # BUGFIX 2: the page renders this as "((ISRL,volume 1234))" - a
+        # *double* closing paren. ``(.+)\)`` is greedy, so it captured
+        # everything up to the second ``)``, leaving a stray ``)`` glued to
+        # the volume number (e.g. "1234)"). Match digits directly instead.
+        volume_match = re.search(r'ISRL,volume\s*(\d+)', page)
         if volume_match:
             printDEBUG(1, "\t try to find the volume number")
             entry['volume'] = volume_match.group(1)
@@ -1234,17 +1401,23 @@ def _handle_springer(entry: dict) -> None:
             printDEBUG(1, "\t try to find the right book title")
             entry['booktitle'] = booktitle_match.group(1)
 
+    # BUGFIX: all three ``...,volume`` markers below render on the page as
+    # "((XXX,volume 1234))" - a *double* closing paren. The original greedy
+    # ``(.+)\)`` regexes captured everything up to the second ``)``, leaving
+    # a stray ``)`` glued to the volume number (e.g. "1234)"); SBD alone
+    # worked around it with a ``[:-1]`` slice. Matching digits directly is
+    # correct for all of them and needs no such workaround.
     if "LNEE,volume" in page:
         printDEBUG(1, "   found LNEE series")
         entry['series'] = 'lnee'
-        volume_match = re.search(r'LNEE,volume (.+)\)', page)
+        volume_match = re.search(r'LNEE,volume\s*(\d+)', page)
         if volume_match:
             printDEBUG(1, "\t try to find the volume number")
             entry['volume'] = volume_match.group(1)
 
     if "LNCVB,volume" in page:
         printDEBUG(1, "   found LNCVB series")
-        volume_match = re.search(r'LNCVB,volume (.+)\)', page)
+        volume_match = re.search(r'LNCVB,volume\s*(\d+)', page)
         if volume_match:
             printDEBUG(1, "\t try to find the volume number")
             entry['volume'] = volume_match.group(1)
@@ -1256,10 +1429,10 @@ def _handle_springer(entry: dict) -> None:
 
     if "SBD,volume" in page:
         printDEBUG(1, "   found SBD series")
-        volume_match = re.search(r'SBD,volume (.+)\)', page)
+        volume_match = re.search(r'SBD,volume\s*(\d+)', page)
         if volume_match:
             printDEBUG(1, "\t try to find the volume number")
-            entry['volume'] = volume_match.group(1)[:-1]   # strip trailing ')'
+            entry['volume'] = volume_match.group(1)
 
     printDEBUG(1, "Springer editor: changing entry type from article to inproceedings - done")
 
@@ -1316,7 +1489,162 @@ def _handle_iop(entry: dict) -> None:
             del entry[stale]
 
 
-def _handle_ieee(entry: dict) -> None:
+# Cache of raw CrossRef ``message`` dicts, keyed by DOI, shared by every
+# helper below that needs a piece of the same record (event location, work
+# type, ...) so a given DOI is only ever fetched from CrossRef once per run.
+_CROSSREF_WORK_CACHE: Dict[str, Optional[dict]] = {}
+
+
+def _crossref_work(doi: str) -> Optional[dict]:
+    """Return the CrossRef ``message`` dict for *doi*, or ``None`` on failure.
+
+    Results are cached per *doi* for the lifetime of the process, since
+    several independent helpers (event location, work type, ...) each need
+    a different field off the same CrossRef record and CrossRef rate-limits
+    aggressively (see feedback memory: keep calls sequential and minimal).
+    """
+    if doi in _CROSSREF_WORK_CACHE:
+        return _CROSSREF_WORK_CACHE[doi]
+
+    message: Optional[dict] = None
+    ua = f"doi2bib/1.0 ({_CONTACT_EMAIL})"
+    try:
+        cr = requests.get(
+            f"https://api.crossref.org/works/{doi}",
+            headers={"User-Agent": ua},
+            timeout=10,
+        )
+        cr.raise_for_status()
+        message = cr.json().get("message")
+    except Exception as exc:
+        printDEBUG(1, f"\tCrossRef work lookup failed: {exc}")
+    _CROSSREF_WORK_CACHE[doi] = message
+    return message
+
+
+def _crossref_event_location(doi: str) -> Optional[str]:
+    """Return the CrossRef ``event.location`` string for *doi*, or ``None``.
+
+    IEEE Xplore landing pages are now gated behind an AWS WAF JavaScript
+    challenge: a plain ``requests``/``urllib`` fetch of the ``/document/...``
+    URL returns an empty challenge shell (``gokuProps`` / ``awsWafCookie...``)
+    instead of the real page, which is why the old ``confLoc`` scrape below
+    silently stopped finding anything. CrossRef's structured metadata for
+    IEEE conference papers exposes the same information directly as
+    ``message.event.location`` (e.g. ``"Nanjing, China"``), with no risk of
+    being bot-blocked, so it is tried first.
+    """
+    message = _crossref_work(doi)
+    if not message:
+        return None
+    event = message.get("event")
+    if event:
+        location = (event.get("location") or "").strip()
+        if location:
+            return location
+    return None
+
+
+def _crossref_work_type(doi: str) -> Optional[str]:
+    """Return CrossRef's own ``type`` classification for *doi*, or ``None``.
+
+    E.g. ``"proceedings-article"``, ``"journal-article"``, ``"book-chapter"``.
+
+    Used as a fallback in :func:`_normalise_base_entry` when the ``doi.org``
+    bibtex content-negotiation endpoint (what :func:`_fetch_raw_bibtex`
+    actually calls) mistypes a genuine conference paper as ``@article``.
+    Confirmed for ``10.1109/oceans51537.2024.10682154``: CrossRef's raw JSON
+    record correctly says ``"type": "proceedings-article"`` with a populated
+    ``event``/``container-title``, but the bibtex CrossRef's own citeproc-js
+    conversion returns for the same DOI is ``@article`` with a plain
+    ``journal`` field (container title "OCEANS 2024 - Singapore", which
+    contains neither "Conference" nor "Workshop", so the substring heuristic
+    below can't catch it either).
+    """
+    message = _crossref_work(doi)
+    if not message:
+        return None
+    return message.get("type")
+
+
+def _lookup_curated_city(city: str, abbr: Dict[str, str]) -> Optional[str]:
+    """Match *city* against every curated ``city-...`` value in
+    ``bib/abbreviation.bib`` and return the full hand-verified value
+    (e.g. ``"Honolulu, Hawaii, USA"``) on a confident match, else ``None``.
+
+    Only the text before the first comma in each ``city-`` value is
+    compared against *city*, so this matches regardless of how much (or
+    how little) detail the caller's own string carries -- it is used both
+    for genuinely bare city names (``"Cancun"``) and for CrossRef strings
+    that already have a comma but are still incomplete (``"Honolulu, HI"``
+    has no country; ``"Las Vegas, NV, USA"`` is complete but does not match
+    the curated ``"Las Vegas, Nevada, USA"`` closely enough for the later
+    whole-string abbreviation pass to catch on its own). Matching is
+    fuzzy (Levenshtein) to tolerate minor spelling/accent differences
+    (e.g. ``"Cancun"`` vs. ``"Cancún"``), but the threshold is high because
+    every candidate comes from a hand-verified table, so a confident match
+    is safe to reuse as-is, silently.
+    """
+    city_norm = city.strip().lower()
+    if not city_norm:
+        return None
+
+    best_ratio = 0.0
+    best_value: Optional[str] = None
+    for key, value in abbr.items():
+        if not key.startswith("city-"):
+            continue
+        head = value.split(",", 1)[0].strip().lower()
+        ratio = 1.0 if head == city_norm else lev.ratio(city_norm, head)
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_value = value
+
+    if best_ratio >= 0.85 and best_value is not None:
+        printDEBUG(1, f"\tResolved city '{city}' via curated abbreviation.bib -> {best_value}")
+        return best_value
+    return None
+
+
+def _geocode_bare_city(city: str) -> Optional[str]:
+    """Best-effort Nominatim (OpenStreetMap) lookup turning a bare city name
+    into ``"City, Country"``. Not hand-verified -- short or generic city
+    names are genuinely ambiguous to a geocoder (e.g. a query for "Rhodes
+    Island" can match a tiny island in the Philippines rather than Rhodes,
+    Greece) -- so a hit is flagged with a "VERIFY" message, the same
+    convention used elsewhere in this script for low-confidence
+    substitutions. Returns ``None`` on any failure or empty result.
+    """
+    try:
+        geo = requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={
+                "q": city,
+                "format": "jsonv2",
+                "addressdetails": 1,
+                "limit": 1,
+                "accept-language": "en",
+            },
+            headers={"User-Agent": f"doi2bib/1.0 ({_CONTACT_EMAIL})"},
+            timeout=10,
+        )
+        geo.raise_for_status()
+        results = geo.json()
+        if results:
+            country = results[0].get("address", {}).get("country")
+            if country:
+                located = f"{city}, {country}"
+                print(
+                    "\nVERIFY if correct: geocoded bare conference location\n\t"
+                    + city + " to\n\t " + located
+                )
+                return located
+    except Exception as exc:
+        printDEBUG(1, f"\tGeocoding lookup failed for {city!r}: {exc}")
+    return None
+
+
+def _handle_ieee(entry: dict, abbr: Dict[str, str]) -> None:
     """Fill in missing ``pages`` / ``address`` for IEEE conferences (``10.1109/...``)."""
     is_ieee_conf = (
         entry['doi'].find("10.1109/") > -1
@@ -1342,15 +1670,46 @@ def _handle_ieee(entry: dict) -> None:
             printDEBUG(1, "\tCould not find missing page range")
 
     # 2. Extract the conference location ------------------------------------
+    # Primary source: CrossRef's ``event.location`` field (see
+    # _crossref_event_location). Falls back to scraping ``confLoc`` off the
+    # IEEE Xplore landing page -- the original approach -- for the rare
+    # record that has no CrossRef event block but a reachable page. The
+    # generic whole-string abbreviation lookup against bib/abbreviation.bib
+    # (``city-...`` strings) still runs later in get_entry(), but it is a
+    # blunt instrument (Levenshtein on the *whole* address), so it is not
+    # enough on its own: CrossRef city-only fragments like "Honolulu, HI"
+    # are too far (ratio 0.667) from the curated "Honolulu, Hawaii, USA" to
+    # clear that step's 0.8 threshold. So the city name is always matched
+    # against the curated table here first, regardless of whether CrossRef's
+    # string already has a comma -- only a fully bare city with no curated
+    # match falls through to geocoding.
     if 'address' not in entry or len(entry['address']) < 1:
         printDEBUG(1, "\tTry to find missing conference location of an IEEE conference")
-        page = getContentFromURL(entry['url'])
-        if re.search(r'confLoc', page):
-            printDEBUG(1, "\tTrying to extract the confLoc data")
-            loc = re.search(r'confLoc\":\"([\w,\s]+)\"', page)
-            if loc:
-                entry['address'] = loc[1]
-                printDEBUG(1, "\tFound conference location = " + entry['address'])
+        location = _crossref_event_location(entry['doi'])
+        if location:
+            city = location.split(',', 1)[0].strip()
+            curated = _lookup_curated_city(city, abbr)
+            if curated:
+                location = curated
+            elif ',' not in location:
+                # Fully bare city (no curated match either) -- last resort.
+                printDEBUG(1, f"\tCrossRef location '{location}' has no country; geocoding")
+                geocoded = _geocode_bare_city(location)
+                if geocoded:
+                    location = geocoded
+            entry['address'] = location
+            printDEBUG(1, "\tFound conference location (CrossRef) = " + entry['address'])
+        else:
+            printDEBUG(1, "\tCrossRef had no event location; trying the landing page")
+            page = getContentFromURL(entry['url'])
+            if re.search(r'confLoc', page):
+                printDEBUG(1, "\tTrying to extract the confLoc data")
+                loc = re.search(r'confLoc\":\"([\w,\s]+)\"', page)
+                if loc:
+                    entry['address'] = loc[1]
+                    printDEBUG(1, "\tFound conference location (landing page) = " + entry['address'])
+                else:
+                    printDEBUG(1, "\tCould not find conference location")
             else:
                 printDEBUG(1, "\tCould not find conference location")
 
@@ -1405,7 +1764,8 @@ _BIBTEX_FIELD_ORDER: Tuple[str, ...] = (
     'ENTRYTYPE', 'title', 'author', 'journal', 'booktitle',
     'shortjournalproceedings', 'howpublished', 'series', 'volume', 'number',
     'pages', 'month', 'year', 'institution', 'school', 'publisher',
-    'eprint', 'address', 'editor', 'keywords', 'eprinttype', 'doi', 'url',
+    'eprint', 'address', 'editor', 'keywords', 'd2b-version',
+    'eprinttype', 'doi', 'url',
 )
 
 
@@ -1545,7 +1905,44 @@ def _normalise_base_entry(entry: dict) -> None:
 
         # Crossref is not always well-formatted and sometimes tags
         # conference/workshop papers as ``journal``.
-        if ('onference' in entry['journal']) or ('orkshop' in entry['journal']):
+        #
+        # BUGFIX: Springer DOIs (10.1007/...) are exempted here. This
+        # generic check used to fire on any Springer series entry whose
+        # CrossRef journal title contains "Conference" (e.g. LNEE chapters
+        # in "Proceedings of the ... Conference"), deleting `journal`
+        # *before* `_handle_springer` runs. Since `_handle_springer` only
+        # acts when `journal` is still present, this silently skipped
+        # series/volume/booktitle detection for every such entry, leaving
+        # it as a plain inproceedings with the raw, unabbreviated CrossRef
+        # title as booktitle and no series/volume at all.
+        # `_handle_springer` performs the equivalent (but more accurate,
+        # meta-tag-driven) conversion itself further down the pipeline, so
+        # Springer DOIs are left untouched here.
+        is_springer_doi = entry.get('doi', '').find("10.1007/") > -1
+        looks_like_proceedings = (
+            ('onference' in entry['journal']) or ('orkshop' in entry['journal'])
+        )
+
+        # BUGFIX: the substring check above misses conference container
+        # titles that don't literally contain "Conference"/"Workshop" (e.g.
+        # "OCEANS 2024 - Singapore"). For those, ask CrossRef's own JSON
+        # record directly: if it says ``type == "proceedings-article"``,
+        # trust that over the mistyped bibtex CrossRef itself handed back.
+        # Confirmed live for 10.1109/oceans51537.2024.10682154 (see
+        # _crossref_work_type docstring). Only queried when the cheap
+        # substring check already missed and the entry isn't Springer
+        # (Springer's own handler does this more accurately later), to
+        # avoid an extra CrossRef hit on every single entry.
+        if not is_springer_doi and not looks_like_proceedings:
+            if _crossref_work_type(entry.get('doi', '')) == "proceedings-article":
+                printDEBUG(
+                    1,
+                    "\tCrossRef type is 'proceedings-article' but bibtex was "
+                    "'article'; converting to inproceedings",
+                )
+                looks_like_proceedings = True
+
+        if not is_springer_doi and looks_like_proceedings:
             entry['ENTRYTYPE'] = "inproceedings"
             entry['booktitle'] = entry['journal']
             del entry['journal']
@@ -1580,6 +1977,9 @@ def _sanitize_after_key(entry: dict) -> None:
     # Always ensure a ``keywords`` key exists.
     entry.setdefault('keywords', '')
 
+    # Stamp the script version that produced this entry (see _D2B_VERSION).
+    entry['d2b-version'] = _D2B_VERSION
+
 
 def _log_raw_content(new_key: str, doi_content: str) -> None:
     """Dump the raw DOI payload to the log directory (best effort)."""
@@ -1605,7 +2005,7 @@ def _apply_cvpr_special_case(entry: dict) -> None:
     """Populate the ``address`` of CVPR(W) entries from the yearly lookup."""
     if 'booktitle' not in entry:
         return
-    if entry['booktitle'] in ('icvpr', 'icvprw'):
+    if entry['booktitle'] in ('icvpr', 'icvprw') and 'year' in entry:
         entry['address'] = CVPR_CITY_BY_YEAR[int(entry['year'])]
         printDEBUG(1, "Found icvpr and adding address " + entry['address'])
         entry['keywords'] = ''
@@ -1652,14 +2052,23 @@ def _abbreviate_booktitle(entry: dict, abbr: Dict[str, str]) -> None:
     if 'booktitle' not in entry:
         return
 
-    year = entry['year'] + " "
-    if year in entry['booktitle']:
+    year = entry.get('year', '') + " "
+    if year.strip() and year in entry['booktitle']:
         printDEBUG(1, "Found year in booktitle; removing it")
         printDEBUG(1, "\tBefore removing it " + entry['booktitle'])
         entry['booktitle'] = entry['booktitle'].replace(year, '')
         printDEBUG(1, "\tAfter removing it " + entry['booktitle'] + "\n")
 
+    before = entry['booktitle']
     _abbreviate_field(entry, 'booktitle', abbr, threshold=0.8, warn_below=0.9)
+    # BUGFIX: mirror _abbreviate_journal's cleanup. Once booktitle has been
+    # replaced by its abbreviation macro (e.g. "Computer Vision - ECCV 2024"
+    # -> eccv), a leftover shortjournalproceedings field is redundant -- and
+    # for Springer/LNCS series entries it was left in place, causing entries
+    # like Somers2024Keypoint to carry a stale shortjournalproceedings field
+    # not present in any other LNCS entry in the bibliography.
+    if entry['booktitle'] != before and 'shortjournalproceedings' in entry:
+        del entry['shortjournalproceedings']
 
 
 def get_entry(doi: str) -> str:
@@ -1728,7 +2137,7 @@ def get_entry(doi: str) -> str:
         handle_ACM(entry)
     get_linenumber()
 
-    _handle_ieee(entry)
+    _handle_ieee(entry, abbr)
 
     if entry['doi'].find("10.3390/") > -1:              # MDPI editor
         entry = handle_MDPI(entry)
@@ -2155,7 +2564,15 @@ class NeurIPSSource(ConferenceSource):
 
     # -- papers.nips.cc / proceedings.neurips.cc ----------------------------
     def _fetch_from_proceedings(self, url: str) -> str:
-        response = requests.get(url, headers=hdr, timeout=30)
+        # BUGFIX: ``hdr`` was referenced but never defined anywhere in this
+        # module -- any real call raised ``NameError`` (only masked in
+        # normal usage because callers upstream, e.g. NeurIPS DOI/OpenReview
+        # dispatch, rarely reach this branch; confirmed pre-existing, not
+        # introduced by the proceedings-article/inproceedings fix). Reuse
+        # the same spoofed-User-Agent header used elsewhere in this file
+        # (``getContentFromURL``) for landing pages that may block bare
+        # ``requests`` calls.
+        response = requests.get(url, headers=dict(_SPOOFED_HEADERS), timeout=30)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
 

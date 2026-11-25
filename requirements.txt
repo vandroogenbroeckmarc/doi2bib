@@ -1,8 +1,31 @@
-bibtexparser==1.4.3
-python_Levenshtein==0.27.1
-PyPDF2==3.0.1
-selenium==4.35.0
-webdriver_manager==4.0.2
-requests-html==0.10.0
-lxml_html_clean==0.4.2
-beautifulsoup4
+# Runtime dependencies of the doi2bib script.
+# Install with:  python3 -m pip install -r requirements.txt
+
+# BibTeX parsing/writing. doi2bib uses the 1.x API (bparser, bwriter,
+# customization), which was removed in bibtexparser 2.x, so stay below 2.
+bibtexparser>=1.4,<2
+
+# Fuzzy string matching (imported as "Levenshtein")
+Levenshtein>=0.20
+
+# Page counting from downloaded PDFs (MDPI handler)
+PyPDF2>=3.0
+
+# HTTP requests (CrossRef, Unpaywall, publisher pages)
+requests>=2.28
+
+# HTML parsing (imported as "bs4")
+beautifulsoup4>=4.11
+
+# JS-rendered pages. Recent lxml releases moved lxml.html.clean into a
+# separate package, which requests-html needs.
+requests-html>=0.10
+lxml_html_clean>=0.1
+
+# Headless-Chrome fallback (Springer/MDPI bot challenges); needs Google
+# Chrome installed on the machine
+selenium>=4.10
+webdriver-manager>=4.0
+
+# Test suite (tests/)
+pytest>=8.0
