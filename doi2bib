@@ -29,6 +29,8 @@ import os.path
 import re
 import sys
 import time
+from urllib.parse import urljoin, urlparse
+from conference_metadata import ICLR_METADATA_BY_YEAR, ICML_METADATA_BY_YEAR
 from inspect import currentframe
 from os import environ, makedirs
 from typing import Callable, Dict, List, Optional, Tuple
@@ -2668,7 +2670,369 @@ class NeurIPSSource(ConferenceSource):
         return _post_process_conference_entry(entry)
 
 
-CONFERENCE_SOURCES.append(NeurIPSSource)
+class OpenReviewSource(ConferenceSource):
+    name = "OpenReview"
+
+    @classmethod
+    def matches(cls, url: str) -> bool:
+        parsed = urlparse(url)
+        return parsed.hostname == "openreview.net" and parsed.path in {"/forum", "/pdf"}
+
+    @staticmethod
+    def _openreview_year(note, venue):
+        match = re.search(r"\b(?:19|20)\d{2}\b", venue)
+        if match:
+            return int(match.group())
+        if note.get("pdate"):
+            return datetime.datetime.fromtimestamp(note["pdate"] / 1000, datetime.timezone.utc).year
+        raise RuntimeError("Missing OpenReview publication year")
+
+    @staticmethod
+    def _openreview_get(note_id):
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", note_id):
+            raise ValueError("Invalid OpenReview note id")
+        failures = []
+        for host in ("api2.openreview.net", "api.openreview.net"):
+            try:
+                response = requests.get(f"https://{host}/notes", params={"id": note_id}, timeout=20)
+                response.raise_for_status()
+                for note in response.json().get("notes", []):
+                    if note.get("id") == note_id:
+                        return note
+                failures.append(f"{host} returned no matching note")
+            except (requests.RequestException, ValueError) as exc:
+                failures.append(str(exc))
+
+        # DBLP indexes canonical forum URLs and numbers each author signature.
+        query = f"""PREFIX d: <https://dblp.org/rdf/schema#>
+            SELECT ?paper ?title ?venue ?year ?name ?ordinal ?pages WHERE {{
+                ?paper d:documentPage <https://openreview.net/forum?id={note_id}> ;
+                       d:title ?title ; d:publishedIn ?venue ; d:yearOfPublication ?year ;
+                       d:hasSignature ?signature .
+                ?signature a d:AuthorSignature ; d:signatureOrdinal ?ordinal ;
+                           d:signatureDblpName ?name .
+                OPTIONAL {{ ?paper d:pagination ?pages }}
+            }} ORDER BY ?ordinal"""
+        try:
+            response = requests.get("https://sparql.dblp.org/sparql",
+                                    params={"query": query, "format": "json"}, timeout=20)
+            response.raise_for_status()
+            rows = response.json()["results"]["bindings"]
+            if rows and len({row["paper"]["value"] for row in rows}) == 1:
+                first = rows[0]
+                return {"content": {
+                    "title": first["title"]["value"].removesuffix("."),
+                    "venue": first["venue"]["value"] + " " + first["year"]["value"],
+                    "authors": [re.sub(r" \d{4}$", "", row["name"]["value"]) for row in rows],
+                    "pages": first.get("pages", {}).get("value"),
+                }}
+            failures.append("DBLP returned no unique match")
+        except (requests.RequestException, ValueError, KeyError) as exc:
+            failures.append(f"DBLP: {exc}")
+        raise RuntimeError(f"Could not retrieve OpenReview note {note_id}: " + "; ".join(failures))
+
+    @staticmethod
+    def _openreview_field(content: Dict, key: str):
+        """OpenReview v2 wraps values in ``{"value": X}``; v1 stores X directly."""
+        value = content.get(key)
+        if isinstance(value, dict) and "value" in value:
+            return value["value"]
+        return value
+
+    def fetch(self, url: str) -> str:
+        match = re.search(r"[?&]id=([^&]+)", url)
+        if not match:
+            raise ValueError(f"No OpenReview id= parameter in URL: {url}")
+        note_id = match.group(1)
+        note = self._openreview_get(note_id)
+        content = note.get("content", {})
+
+        venue = self._openreview_field(content, "venue") or ""
+        venueid = self._openreview_field(content, "venueid") or ""
+        venue_hint = " ".join(
+            str(value) for value in [venue, venueid] if value
+        )
+
+        if re.search(r"workshop|withdrawn|rejected|submission", venue, re.I) or not venue_hint:
+            raise RuntimeError(f"No supported publication venue for OpenReview note {note_id}")
+
+        if re.search(r"\bTMLR\b|Transactions on Machine Learning Research", venue_hint, re.I):
+            booktitle = "tmlr"
+        elif re.search(r"\bICLR(?:\.cc)?\b|learning representations", venue_hint, re.I):
+            booktitle = "iclr"
+        elif re.search(r"\bICML(?:\.cc)?\b|international conference on machine learning", venue_hint, re.I):
+            booktitle = "icml"
+        elif re.search(r"\bNeurIPS\b|\bNIPS(?:\.cc)?\b", venue_hint, re.I):
+            booktitle = "nips"
+        else:
+            raise RuntimeError(
+                f"Could not identify the OpenReview venue for note {note_id}: "
+                f"{venue_hint or 'no venue metadata'}"
+            )
+
+        year = self._openreview_year(note, venue_hint)
+        printDEBUG(1, f"OpenReview venue resolved as {booktitle} ({year})")
+
+        # TMLR is a journal; NeurIPS and ICLR use conference metadata.
+        if booktitle == "tmlr":
+            entry = {
+                "ENTRYTYPE": "article",
+                "journal": "tmlr",
+                "year": str(year),
+                "url": url,
+            }
+            volume = (
+                self._openreview_field(content, "volume")
+                or note.get("volume")
+                or year
+            )
+            entry["volume"] = str(volume)
+        elif booktitle == "nips":
+            entry = NeurIPSSource()._base_entry(year, url)
+            entry["month"] = "nov" if year == 2022 else entry["month"]
+        else:
+            entry = {
+                "ENTRYTYPE": "inproceedings",
+                "booktitle": booktitle,
+                "year": str(year),
+                "url": url,
+            }
+        if booktitle == "iclr":
+            entry.update(ICLR_METADATA_BY_YEAR.get(year, {}))
+
+        if booktitle == "icml":
+            entry.update(ICML_METADATA_BY_YEAR.get(year, {}))
+
+        title = self._openreview_field(content, "title") or ""
+        authors = self._openreview_field(content, "authors") or []
+        if isinstance(authors, str):
+            authors = [author.strip() for author in authors.split(",")]
+        entry["title"] = title
+        entry["author"] = self._format_authors(authors)
+        pages = self._openreview_field(content, "pages") or note.get("pages")
+        if booktitle == "nips":
+            proceedings_entry = self._fetch_neurips_proceedings_bibtex(year, title)
+            if proceedings_entry:
+                if proceedings_entry.get("volume"):
+                    entry["volume"] = str(proceedings_entry["volume"])
+                if not pages:
+                    pages = proceedings_entry.get("pages")
+                if year != 2022 and proceedings_entry.get("month"):
+                    entry["month"] = str(proceedings_entry["month"]).lower()
+        if pages:
+            entry["pages"] = re.sub(r"-{2,}", "-", str(pages).strip())
+        entry["d2b-version"] = _D2B_VERSION
+        entry["ID"] = _build_bibtex_key(entry)
+        return _post_process_conference_entry(entry)
+
+    @staticmethod
+    def _fetch_neurips_proceedings_bibtex(
+        year: int, expected_title: str
+    ) -> Optional[Dict[str, str]]:
+        """Match a title in the official year index, then read its BibTeX."""
+        if not expected_title:
+            return None
+
+        def title_key(value: str) -> str:
+            return re.sub(r"[^a-z0-9]+", "", value.casefold())
+
+        index_url = f"https://proceedings.neurips.cc/paper_files/paper/{year}"
+        headers = dict(_SPOOFED_HEADERS)
+        try:
+            index_response = requests.get(index_url, headers=headers, timeout=30)
+            index_response.raise_for_status()
+            index_soup = BeautifulSoup(index_response.text, "html.parser")
+            expected_key = title_key(expected_title)
+            paper_url = None
+            for anchor in index_soup.find_all("a", href=True):
+                label = re.sub(
+                    r"^PDF:\s*", "", anchor.get_text(" ", strip=True), flags=re.I
+                )
+                if title_key(label) == expected_key:
+                    paper_url = urljoin(index_url + "/", anchor["href"])
+                    break
+            if paper_url is None:
+                printDEBUG(2, f"NeurIPS {year} proceedings index had no title match")
+                return None
+
+            paper_response = requests.get(paper_url, headers=headers, timeout=30)
+            paper_response.raise_for_status()
+            paper_soup = BeautifulSoup(paper_response.text, "html.parser")
+            bibtex_url = None
+            for anchor in paper_soup.find_all("a", href=True):
+                label = anchor.get_text(" ", strip=True).lower()
+                href = anchor["href"].lower()
+                if "bibtex" in label or "bibtex" in href:
+                    bibtex_url = urljoin(paper_url, anchor["href"])
+                    break
+            if bibtex_url is None:
+                printDEBUG(2, f"NeurIPS proceedings page had no BibTeX link: {paper_url}")
+                return None
+
+            bibtex_response = requests.get(
+                bibtex_url,
+                headers={**headers, "Accept": "application/x-bibtex, text/plain, */*"},
+                timeout=20,
+            )
+            bibtex_response.raise_for_status()
+            database = bibtexparser.loads(bibtex_response.text)
+            if database.entries:
+                record = database.entries[0]
+                if title_key(str(record.get("title", ""))) == expected_key:
+                    return record
+                printDEBUG(2, f"NeurIPS BibTeX title did not match: {bibtex_url}")
+        except Exception as exc:
+            printDEBUG(2, f"NeurIPS proceedings lookup failed: {exc}")
+        return None
+
+
+class ICLRProceedingsSource(ConferenceSource):
+    name = "ICLR proceedings"
+    paper_path = re.compile(r"/paper_files/paper/(\d{4})/hash/[0-9a-f]+-Abstract-Conference\.html")
+
+    @classmethod
+    def matches(cls, url: str) -> bool:
+        parsed = urlparse(url)
+        return parsed.hostname == "proceedings.iclr.cc" and bool(cls.paper_path.fullmatch(parsed.path))
+
+    def fetch(self, url: str) -> str:
+        page = requests.get(url, timeout=20)
+        page.raise_for_status()
+        soup = BeautifulSoup(page.text, "html.parser")
+        title_meta = soup.find("meta", attrs={"name": "citation_title"})
+        heading = soup.select_one("h1, h4")
+        title = title_meta.get("content") if title_meta else heading.get_text(" ", strip=True) if heading else ""
+        link = next((a for a in soup.select("a[href]") if a.get_text(strip=True).casefold() == "bibtex"), None)
+        if not title or link is None:
+            raise ValueError(f"Missing paper title or BibTeX link on {url}")
+
+        response = requests.get(urljoin(page.url, link["href"]), timeout=20)
+        response.raise_for_status()
+        records = bibtexparser.loads(response.text).entries
+        year = self.paper_path.fullmatch(urlparse(url).path).group(1)
+
+        def normalized(value):
+            return " ".join(value.replace("{", "").replace("}", "").split()).casefold()
+
+        if len(records) != 1 or normalized(records[0].get("title", "")) != normalized(title) or records[0].get("year") != year:
+            raise ValueError(f"ICLR BibTeX title or year differs from the paper page: {url}")
+        entry = records[0]
+        entry.update(ICLR_METADATA_BY_YEAR.get(int(year), {}))
+        entry.update(booktitle="iclr", url=url)
+        if entry.get("pages"):
+            entry["pages"] = re.sub(r"-{2,}", "-", entry["pages"])
+        entry["d2b-version"] = _D2B_VERSION
+        entry["ID"] = _build_bibtex_key(dict(entry))
+        return _post_process_conference_entry(entry)
+
+
+class PMLRSource(ConferenceSource):
+    """Read the official BibTeX block from a PMLR paper page."""
+
+    name = "PMLR"
+
+    @classmethod
+    def matches(cls, url: str) -> bool:
+        parsed = urlparse(url)
+        if parsed.hostname not in {"proceedings.mlr.press", "www.proceedings.mlr.press"}:
+            return False
+        return re.fullmatch(r"/v\d+/[^/]+\.html", parsed.path) is not None
+
+    def fetch(self, url: str) -> str:
+        response = requests.get(url, headers={"Accept": "text/html"}, timeout=30)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        bibtex = self._find_bibtex_record(soup)
+        if bibtex is None:
+            raise RuntimeError(f"No BibTeX record found on PMLR page: {url}")
+
+        database = bibtexparser.loads(bibtex)
+        if not database.entries:
+            raise RuntimeError(f"Could not parse BibTeX record on PMLR page: {url}")
+
+        source = database.entries[0]
+        entry = {
+            field: source[field]
+            for field in (
+                "title", "author", "booktitle", "volume", "pages", "month",
+                "year",
+            )
+            if source.get(field) not in (None, "")
+        }
+        entry["ENTRYTYPE"] = "inproceedings"
+        entry["d2b-version"] = _D2B_VERSION
+        entry["url"] = url
+
+        source_booktitle = str(source.get("booktitle", ""))
+        if re.search(r"International Conference on Machine Learning", source_booktitle, re.I):
+            entry["booktitle"] = "icml"
+            entry["series"] = "pmlr"
+            entry["publisher"] = "publisher-mlrp"
+            year = int(entry["year"])
+            entry.update(ICML_METADATA_BY_YEAR.get(year, {}))
+        else:
+            if source.get("series"):
+                entry["series"] = "pmlr"
+            if source.get("publisher"):
+                entry["publisher"] = "publisher-mlrp"
+
+        if "pages" in entry:
+            entry["pages"] = re.sub(r"-{2,}", "-", str(entry["pages"]).strip())
+        month = self._month_macro(entry.get("month"))
+        if month:
+            entry["month"] = month
+        # The shared key builder cleans title braces in place; build from a
+        # copy so PMLR's title protection stays intact in the serialized entry.
+        entry["ID"] = _build_bibtex_key(dict(entry))
+
+        printDEBUG(1, f"PMLR paper fetched: {url}")
+        return _post_process_conference_entry(entry)
+
+    @staticmethod
+    def _month_macro(month: Optional[str]) -> Optional[str]:
+        """Convert PMLR's date range (for example, ``21--27 Jul``) to a month."""
+        if not month:
+            return None
+        match = re.search(
+            r"\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|"
+            r"Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|"
+            r"Nov(?:ember)?|Dec(?:ember)?)\b",
+            str(month),
+            re.IGNORECASE,
+        )
+        return match.group(1)[:3].lower() if match else str(month)
+
+    @staticmethod
+    def _find_bibtex_record(soup: BeautifulSoup) -> Optional[str]:
+        """Find the first balanced ``@InProceedings{...}`` record in the page."""
+        candidates = [node.get_text(" ", strip=True) for node in soup.find_all(["pre", "code"])]
+        candidates.append(soup.get_text(" ", strip=True))
+
+        for text in candidates:
+            match = re.search(r"@(?:inproceedings|conference)\s*\{", text, re.I)
+            if not match:
+                continue
+            opening = text.find("{", match.start())
+            depth = 0
+            for index in range(opening, len(text)):
+                char = text[index]
+                if char not in "{}":
+                    continue
+                backslashes = 0
+                cursor = index - 1
+                while cursor >= 0 and text[cursor] == "\\":
+                    backslashes += 1
+                    cursor -= 1
+                if backslashes % 2:
+                    continue
+                depth += 1 if char == "{" else -1
+                if depth == 0:
+                    return text[match.start():index + 1]
+        return None
+
+
+# Match venue-aware OpenReview paper links before the broader NeurIPS URL matcher.
+CONFERENCE_SOURCES.extend([OpenReviewSource, NeurIPSSource, ICLRProceedingsSource, PMLRSource])
 
 
 # ---------------------------------------------------------------------------
