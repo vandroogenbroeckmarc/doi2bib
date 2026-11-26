@@ -295,10 +295,10 @@ if path_to_bibliography is None:
     exit()
 
 if LOGGING > 0:
-    path_to_log = path_to_bibliography + "log/"
+    path_to_log = os.path.join(path_to_bibliography, "log")
     printDEBUG(2, "Logging and path to log = " + path_to_log)
 
-path_to_file_abbreviation = path_to_bibliography + "bib/abbreviation.bib"
+path_to_file_abbreviation = os.path.join(path_to_bibliography, "bib", "abbreviation.bib")
 
 
 # ===========================================================================
@@ -1986,7 +1986,8 @@ def _log_raw_content(new_key: str, doi_content: str) -> None:
     if LOGGING <= 0:
         return
     try:
-        filename = path_to_log + new_key
+        os.makedirs(path_to_log, exist_ok=True)
+        filename = os.path.join(path_to_log, new_key)
         printDEBUG(2, "Printing the raw doi content in " + filename)
         with open(filename, "w") as f:
             f.write(doi_content)
@@ -1996,7 +1997,10 @@ def _log_raw_content(new_key: str, doi_content: str) -> None:
 
 def _load_string_abbreviations() -> Dict[str, str]:
     """Load the ``@string{...}`` table defined in ``abbreviation.bib``."""
-    with open(path_to_file_abbreviation) as f:
+    path = path_to_file_abbreviation
+    if not os.path.isfile(path):
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bib", "abbreviation.bib")
+    with open(path) as f:
         bib_database_abbr = bibtexparser.load(f)
     return bib_database_abbr.strings
 
