@@ -1054,6 +1054,17 @@ def _sanitize_key(key: str) -> str:
     return key
 
 
+def _append_venue_to_key(entry: dict) -> None:
+    """Use the resolved proceedings, journal, or series name in the citation key."""
+    for field in ('booktitle', 'journal', 'series'):
+        venue = entry.get(field, '').strip()
+        suffix = re.sub(r'[^\w-]+', '-', venue.lower()).strip('-')
+        if suffix:
+            if not entry['ID'].lower().endswith('-' + suffix):
+                entry['ID'] += '-' + suffix
+            return
+
+
 def _clean_title(title: str) -> str:
     """Basic title clean-up that must happen before the key is built from it."""
     replacements = [
@@ -1987,7 +1998,7 @@ def _log_raw_content(new_key: str, doi_content: str) -> None:
         return
     try:
         os.makedirs(path_to_log, exist_ok=True)
-        filename = os.path.join(path_to_log, new_key)
+        filename = os.path.join(path_to_log, re.sub(r"[/\\]", "_", new_key))
         printDEBUG(2, "Printing the raw doi content in " + filename)
         with open(filename, "w") as f:
             f.write(doi_content)
@@ -2107,7 +2118,6 @@ def get_entry(doi: str) -> str:
         new_key = _build_bibtex_key(entry)
         printDEBUG(1, "Replacing ID key " + old_key + " by " + new_key)
         entry['ID'] = new_key
-        _log_raw_content(new_key, doi_content)
 
     printDEBUG(2, "Before processing but after changing the ID key")
     printDEBUG(2, entry)
@@ -2168,6 +2178,9 @@ def get_entry(doi: str) -> str:
         printDEBUG(1, "Deleting copyright " + entry['copyright'])
         del entry['copyright']
     get_linenumber()
+
+    _append_venue_to_key(entry)
+    _log_raw_content(entry['ID'], doi_content)
 
     # 12. arXiv "et al." expansion -----------------------------------------
     # When the author list of an arXiv entry was truncated with "et al.",
@@ -2671,6 +2684,7 @@ def _post_process_conference_entry(entry: Dict[str, str]) -> str:
     # Guarantee required fields so downstream tools don't choke.
     entry.setdefault("ID", "UnknownKey")
     entry.setdefault("ENTRYTYPE", "inproceedings")
+    _append_venue_to_key(entry)
 
     db = bibtexparser.bibdatabase.BibDatabase()
     db.entries = [entry]
